@@ -1,11 +1,24 @@
 {
-  "name": "claude-mobile-dev-mcp",
+  "name": "@ggboi360/mobile-dev-mcp",
   "version": "0.1.0",
   "description": "MCP server for mobile development with Claude - stream Metro logs, capture screenshots, monitor ADB",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "claude-mobile-dev-mcp": "./dist/index.js"
+    "mobile-dev-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist/**/*",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GGBoi360/mobile-dev-mcp.git"
+  },
+  "homepage": "https://ggboi360.github.io/mobile-dev-mcp",
+  "bugs": {
+    "url": "https://github.com/GGBoi360/mobile-dev-mcp/issues"
   },
   "scripts": {
     "build": "tsc",

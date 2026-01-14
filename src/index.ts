@@ -432,6 +432,226 @@ const coreTools: Tool[] = [
       required: ["apkPath"],
     },
   },
+
+  // === iOS SIMULATOR TOOLS ===
+  {
+    name: "list_ios_simulators",
+    description:
+      "List all available iOS Simulators. Shows device name, UDID, state (Booted/Shutdown), and iOS version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        onlyBooted: {
+          type: "boolean",
+          description: "Only show booted simulators (default: false)",
+          default: false,
+        },
+      },
+    },
+  },
+  {
+    name: "screenshot_ios_simulator",
+    description:
+      "Capture a screenshot from an iOS Simulator. Returns the screenshot as a base64-encoded image.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+    },
+  },
+  {
+    name: "get_ios_simulator_logs",
+    description:
+      "Get recent logs from an iOS Simulator. Useful for debugging React Native iOS apps.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+        filter: {
+          type: "string",
+          description: "Filter logs by subsystem or message content",
+        },
+        lines: {
+          type: "number",
+          description: "Number of recent log lines (default: 50)",
+          default: 50,
+        },
+      },
+    },
+  },
+  {
+    name: "get_ios_simulator_info",
+    description:
+      "Get detailed information about an iOS Simulator including device type, iOS version, and state.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+    },
+  },
+  {
+    name: "boot_ios_simulator",
+    description:
+      "[PRO] Boot an iOS Simulator by UDID or device name.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        udid: {
+          type: "string",
+          description: "Simulator UDID or device name (e.g., 'iPhone 15 Pro')",
+        },
+      },
+      required: ["udid"],
+    },
+  },
+  {
+    name: "shutdown_ios_simulator",
+    description:
+      "[PRO] Shutdown an iOS Simulator.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Use 'all' to shutdown all simulators.",
+        },
+      },
+      required: ["udid"],
+    },
+  },
+  {
+    name: "install_ios_app",
+    description:
+      "[PRO] Install an app (.app bundle) on an iOS Simulator.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        appPath: {
+          type: "string",
+          description: "Path to the .app bundle",
+        },
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+      required: ["appPath"],
+    },
+  },
+  {
+    name: "launch_ios_app",
+    description:
+      "[PRO] Launch an app on an iOS Simulator by bundle identifier.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bundleId: {
+          type: "string",
+          description: "App bundle identifier (e.g., 'com.example.myapp')",
+        },
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+      required: ["bundleId"],
+    },
+  },
+  {
+    name: "terminate_ios_app",
+    description:
+      "[PRO] Terminate (force quit) an app on an iOS Simulator.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bundleId: {
+          type: "string",
+          description: "App bundle identifier to terminate",
+        },
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+      required: ["bundleId"],
+    },
+  },
+  {
+    name: "ios_open_url",
+    description:
+      "[PRO] Open a URL in the iOS Simulator (deep links, universal links).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "URL to open (e.g., 'myapp://screen' or 'https://example.com')",
+        },
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+      required: ["url"],
+    },
+  },
+  {
+    name: "ios_push_notification",
+    description:
+      "[PRO] Send a push notification to an iOS Simulator.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        bundleId: {
+          type: "string",
+          description: "App bundle identifier",
+        },
+        payload: {
+          type: "object",
+          description: "Push notification payload (APS format)",
+        },
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+      required: ["bundleId", "payload"],
+    },
+  },
+  {
+    name: "ios_set_location",
+    description:
+      "[PRO] Set the simulated GPS location on an iOS Simulator.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        latitude: {
+          type: "number",
+          description: "Latitude coordinate",
+        },
+        longitude: {
+          type: "number",
+          description: "Longitude coordinate",
+        },
+        udid: {
+          type: "string",
+          description: "Simulator UDID. Leave empty for the booted simulator.",
+        },
+      },
+      required: ["latitude", "longitude"],
+    },
+  },
 ];
 
 // Combine core tools with license tools
