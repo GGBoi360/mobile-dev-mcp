@@ -2,9 +2,9 @@
  * License validation module for Mobile Dev MCP
  *
  * Tiers:
- * - FREE: No license, limited to beta trial or expired
+ * - FREE: No license (unusable demo)
  * - BASIC ($6/mo): Core 9 tools, 50 line limits, 1 device
- * - ADVANCED ($12/mo): All 17 tools, unlimited, multi-device
+ * - ADVANCED ($8/wk, $12/mo, $99/yr): All 17 tools, unlimited, multi-device
  *
  * Handles:
  * - License key validation against API
@@ -92,7 +92,7 @@ export const BASIC_TOOLS = [
   "set_license_key",
 ] as const;
 
-// ADVANCED TIER ($12/mo) - Pro tools, only for Advanced subscribers
+// ADVANCED TIER ($8/wk, $12/mo, $99/yr) - Pro tools, only for Advanced subscribers
 export const ADVANCED_TOOLS = [
   "stream_adb_realtime",
   "stop_adb_streaming",
@@ -437,12 +437,14 @@ export async function requireAdvanced(toolName: string): Promise<{
 
 Your current tier: ${currentTier.toUpperCase()}
 
-Upgrade to Advanced ($12/mo) for:
+Upgrade to Advanced for:
 - Real-time log streaming
 - Screenshot history
 - Multi-device support (3 devices)
 - Error watching
 - Unlimited log lines
+
+Pricing: $8/week, $12/month, or $99/year
 
 Upgrade at: https://mobile-dev-mcp.com
 
@@ -470,13 +472,13 @@ export async function requireBasic(toolName: string): Promise<{
 
 You're on the FREE tier.
 
-Get Basic ($6/mo) for:
+Get Basic ($6/month) for:
 - All core debugging tools
 - 50 log lines per request
 - Metro + ADB integration
 - Screenshots
 
-Or Advanced ($12/mo) for everything.
+Or Advanced ($8/wk, $12/mo, $99/yr) for everything.
 
 Purchase at: https://mobile-dev-mcp.com`,
   };
@@ -520,8 +522,9 @@ No license key configured.
 │  BETA OFFER: First 200 users!           │
 │  Basic tier FREE for first 3 months     │
 ├─────────────────────────────────────────┤
-│  Basic Solo    $6/mo   → Core tools     │
-│  Advanced Solo $12/mo  → All features   │
+│  Basic Solo    $6/mo      → Core tools  │
+│  Advanced Solo $12/mo     → All features│
+│                $8/wk or $99/yr          │
 └─────────────────────────────────────────┘
 
 Purchase at: https://mobile-dev-mcp.com
