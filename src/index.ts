@@ -26,6 +26,8 @@ import {
   isAdvancedTool,
   LicenseTier,
   TIER_LIMITS,
+  getTrialStatus,
+  incrementTrialUsage,
 } from "./license.js";
 
 const execAsync = promisify(exec);
@@ -292,6 +294,144 @@ const coreTools: Tool[] = [
       },
     },
   },
+
+  // === INTERACTION TOOLS (Advanced) ===
+  {
+    name: "tap_screen",
+    description:
+      "[PRO] Tap on the screen at specific coordinates. Use this to interact with UI elements.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        x: {
+          type: "number",
+          description: "X coordinate to tap",
+        },
+        y: {
+          type: "number",
+          description: "Y coordinate to tap",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["x", "y"],
+    },
+  },
+  {
+    name: "input_text",
+    description:
+      "[PRO] Type text into the currently focused input field.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "Text to type",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["text"],
+    },
+  },
+  {
+    name: "press_button",
+    description:
+      "[PRO] Press a hardware button (back, home, recent apps, volume, power).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        button: {
+          type: "string",
+          enum: ["back", "home", "recent", "volume_up", "volume_down", "power", "enter"],
+          description: "Button to press",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["button"],
+    },
+  },
+  {
+    name: "swipe_screen",
+    description:
+      "[PRO] Swipe on the screen from one point to another. Use for scrolling or gestures.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        startX: {
+          type: "number",
+          description: "Starting X coordinate",
+        },
+        startY: {
+          type: "number",
+          description: "Starting Y coordinate",
+        },
+        endX: {
+          type: "number",
+          description: "Ending X coordinate",
+        },
+        endY: {
+          type: "number",
+          description: "Ending Y coordinate",
+        },
+        duration: {
+          type: "number",
+          description: "Swipe duration in milliseconds (default: 300)",
+          default: 300,
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["startX", "startY", "endX", "endY"],
+    },
+  },
+  {
+    name: "launch_app",
+    description:
+      "[PRO] Launch an app by its package name.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        packageName: {
+          type: "string",
+          description: "Package name of the app (e.g., 'com.example.myapp')",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["packageName"],
+    },
+  },
+  {
+    name: "install_apk",
+    description:
+      "[PRO] Install an APK file to the device.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        apkPath: {
+          type: "string",
+          description: "Path to the APK file",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["apkPath"],
+    },
+  },
 ];
 
 // Combine core tools with license tools
@@ -302,6 +442,10 @@ const tools: Tool[] = [...coreTools, ...licenseTools];
 // ============================================================================
 
 async function getMetroLogs(lines: number = 50, filter?: string): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("get_metro_logs");
+  if (!check.allowed) return check.message!;
+
   const license = await checkLicense();
   const tierLimits = TIER_LIMITS[license.tier];
   const maxLines = Math.min(lines, tierLimits.maxLogLines);
@@ -317,17 +461,23 @@ async function getMetroLogs(lines: number = 50, filter?: string): Promise<string
   if (logs.length === 0) {
     try {
       const response = await fetchMetroStatus(CONFIG.metroPort);
-      return `Metro is running but no logs captured yet.\nMetro status: ${response}\n\nTip: Use 'start_metro_logging' with a log file path, or pipe Metro output:\n  npx expo start 2>&1 | tee metro.log`;
+      let result = `Metro is running but no logs captured yet.\nMetro status: ${response}\n\nTip: Use 'start_metro_logging' with a log file path, or pipe Metro output:\n  npx expo start 2>&1 | tee metro.log`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
     } catch {
-      return `No Metro logs available. Metro may not be running.\n\nTo capture logs:\n1. Start Metro with output to file: npx expo start 2>&1 | tee metro.log\n2. Use start_metro_logging tool with logFile parameter`;
+      let result = `No Metro logs available. Metro may not be running.\n\nTo capture logs:\n1. Start Metro with output to file: npx expo start 2>&1 | tee metro.log\n2. Use start_metro_logging tool with logFile parameter`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
     }
   }
 
   const header = license.valid
     ? `📋 Metro Logs (${logs.length} lines):`
-    : `📋 Metro Logs (${logs.length} lines, free tier max: 50):`;
+    : `📋 Metro Logs (${logs.length} lines, trial mode):`;
 
-  return `${header}\n${"─".repeat(50)}\n${logs.join("\n")}`;
+  let result = `${header}\n${"─".repeat(50)}\n${logs.join("\n")}`;
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
 }
 
 async function getAdbLogs(
@@ -335,6 +485,10 @@ async function getAdbLogs(
   filter: string = "ReactNativeJS",
   level: string = "I"
 ): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("get_adb_logs");
+  if (!check.allowed) return check.message!;
+
   const license = await checkLicense();
   const tierLimits = TIER_LIMITS[license.tier];
   const maxLines = Math.min(lines, tierLimits.maxLogLines);
@@ -355,10 +509,10 @@ async function getAdbLogs(
       return `ADB Error: ${stderr}`;
     }
 
-    const result = stdout || "No logs found matching the filter.";
-    const limitNote = license.valid ? "" : "\n\n💡 Upgrade to Pro for unlimited log lines.";
+    let result = stdout || "No logs found matching the filter.";
+    if (check.message) result += `\n\n${check.message}`;
 
-    return result + limitNote;
+    return result;
   } catch (error: any) {
     if (error.message.includes("not recognized") || error.message.includes("not found")) {
       return "ADB is not installed or not in PATH. Please install Android SDK Platform Tools.";
@@ -375,7 +529,14 @@ async function screenshotEmulator(device?: string): Promise<{
   data?: string;
   mimeType?: string;
   error?: string;
+  trialMessage?: string;
 }> {
+  // Check license/trial status
+  const check = await requireBasic("screenshot_emulator");
+  if (!check.allowed) {
+    return { success: false, error: check.message };
+  }
+
   try {
     const deviceFlag = device ? `-s ${device}` : "";
     const screenshotPath = path.join(
@@ -393,9 +554,9 @@ async function screenshotEmulator(device?: string): Promise<{
     // Clean up temp file
     fs.unlinkSync(screenshotPath);
 
-    // Save to history for Pro users
+    // Save to history for Advanced users
     const license = await checkLicense();
-    if (license.valid) {
+    if (license.valid && license.tier === "advanced") {
       screenshotHistory.unshift({
         timestamp: new Date().toISOString(),
         data: base64Data,
@@ -409,6 +570,7 @@ async function screenshotEmulator(device?: string): Promise<{
       success: true,
       data: base64Data,
       mimeType: "image/png",
+      trialMessage: check.message,
     };
   } catch (error: any) {
     return {
@@ -419,15 +581,23 @@ async function screenshotEmulator(device?: string): Promise<{
 }
 
 async function listDevices(): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("list_devices");
+  if (!check.allowed) return check.message!;
+
   try {
     const { stdout } = await execAsync("adb devices -l");
     const lines = stdout.trim().split("\n");
 
     if (lines.length <= 1) {
-      return `No devices connected.\n\nTo connect:\n- Start an Android emulator (Android Studio, Genymotion)\n- Or connect a physical device with USB debugging enabled`;
+      let result = `No devices connected.\n\nTo connect:\n- Start an Android emulator (Android Studio, Genymotion)\n- Or connect a physical device with USB debugging enabled`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
     }
 
-    return stdout;
+    let result = stdout;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   } catch (error: any) {
     return `Error listing devices: ${error.message}`;
   }
@@ -449,15 +619,27 @@ async function fetchMetroStatus(port: number): Promise<string> {
 }
 
 async function checkMetroStatus(port: number = 8081): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("check_metro_status");
+  if (!check.allowed) return check.message!;
+
   try {
     const status = await fetchMetroStatus(port);
-    return `✅ Metro is running on port ${port}\nStatus: ${status}`;
+    let result = `✅ Metro is running on port ${port}\nStatus: ${status}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   } catch {
-    return `❌ Metro does not appear to be running on port ${port}.\n\nTo start Metro:\n  npx expo start\n  # or\n  npx react-native start`;
+    let result = `❌ Metro does not appear to be running on port ${port}.\n\nTo start Metro:\n  npx expo start\n  # or\n  npx react-native start`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   }
 }
 
 async function getAppInfo(packageName: string): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("get_app_info");
+  if (!check.allowed) return check.message!;
+
   try {
     const { stdout } = await execAsync(`adb shell dumpsys package ${packageName}`);
 
@@ -478,36 +660,56 @@ async function getAppInfo(packageName: string): Promise<string> {
     }
 
     if (relevantInfo.length === 0) {
-      return `Package ${packageName} not found on device.`;
+      let result = `Package ${packageName} not found on device.`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
     }
 
-    return `📱 App Info for ${packageName}:\n${relevantInfo.join("\n")}`;
+    let result = `📱 App Info for ${packageName}:\n${relevantInfo.join("\n")}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   } catch (error: any) {
     return `Error getting app info: ${error.message}`;
   }
 }
 
 async function clearAppData(packageName: string): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("clear_app_data");
+  if (!check.allowed) return check.message!;
+
   try {
     await execAsync(`adb shell pm clear ${packageName}`);
-    return `✅ Successfully cleared data for ${packageName}`;
+    let result = `✅ Successfully cleared data for ${packageName}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   } catch (error: any) {
     return `Error clearing app data: ${error.message}`;
   }
 }
 
 async function restartAdb(): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("restart_adb");
+  if (!check.allowed) return check.message!;
+
   try {
     await execAsync("adb kill-server");
     await execAsync("adb start-server");
     const { stdout } = await execAsync("adb devices");
-    return `✅ ADB server restarted successfully.\n\nConnected devices:\n${stdout}`;
+    let result = `✅ ADB server restarted successfully.\n\nConnected devices:\n${stdout}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   } catch (error: any) {
     return `Error restarting ADB: ${error.message}`;
   }
 }
 
 async function getDeviceInfo(device?: string): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("get_device_info");
+  if (!check.allowed) return check.message!;
+
   try {
     const deviceFlag = device ? `-s ${device}` : "";
     const commands = [
@@ -527,13 +729,15 @@ async function getDeviceInfo(device?: string): Promise<string> {
       )
     );
 
-    return `📱 Device Information:
+    let result = `📱 Device Information:
 ─────────────────────────────
   Android Version: ${results[0]}
   SDK Level: ${results[1]}
   Model: ${results[3]} ${results[2]}
   Screen Size: ${results[4].replace("Physical size: ", "")}
   Screen Density: ${results[5].replace("Physical density: ", "")} dpi`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   } catch (error: any) {
     return `Error getting device info: ${error.message}`;
   }
@@ -543,9 +747,15 @@ async function getDeviceInfo(device?: string): Promise<string> {
 // FIXED: Metro Logging Implementation
 // ============================================================================
 
-function startMetroLogging(logFile?: string): string {
+async function startMetroLogging(logFile?: string): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("start_metro_logging");
+  if (!check.allowed) return check.message!;
+
   if (metroProcess) {
-    return "Metro logging is already running. Use 'stop_metro_logging' first.";
+    let result = "Metro logging is already running. Use 'stop_metro_logging' first.";
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   }
 
   metroLogBuffer = [];
@@ -553,7 +763,9 @@ function startMetroLogging(logFile?: string): string {
   // If a log file is provided, tail it
   if (logFile) {
     if (!fs.existsSync(logFile)) {
-      return `Log file not found: ${logFile}\n\nCreate it by running:\n  npx expo start 2>&1 | tee ${logFile}`;
+      let result = `Log file not found: ${logFile}\n\nCreate it by running:\n  npx expo start 2>&1 | tee ${logFile}`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
     }
 
     // Use PowerShell's Get-Content -Wait on Windows, tail -f on Unix
@@ -584,11 +796,13 @@ function startMetroLogging(logFile?: string): string {
       metroLogBuffer.push(`[ERROR] ${err.message}`);
     });
 
-    return `✅ Metro log capture started!\nWatching: ${logFile}\n\nUse 'get_metro_logs' to retrieve captured logs.`;
+    let result = `✅ Metro log capture started!\nWatching: ${logFile}\n\nUse 'get_metro_logs' to retrieve captured logs.`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
   }
 
   // No log file provided - give instructions
-  return `📋 Metro Log Capture Setup
+  let result = `📋 Metro Log Capture Setup
 ─────────────────────────────
 
 To capture Metro logs, you have two options:
@@ -607,15 +821,23 @@ Option 3: Use ADB logs instead
 
 ─────────────────────────────
 Once you have a log file, call this tool again with the logFile parameter.`;
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
 }
 
-function stopMetroLogging(): string {
+async function stopMetroLogging(): Promise<string> {
+  // Check license/trial status
+  const check = await requireBasic("stop_metro_logging");
+  if (!check.allowed) return check.message!;
+
   if (metroProcess) {
     metroProcess.kill();
     metroProcess = null;
   }
   const logCount = metroLogBuffer.length;
-  return `✅ Metro logging stopped. ${logCount} log lines were captured.`;
+  let result = `✅ Metro logging stopped. ${logCount} log lines were captured.`;
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
 }
 
 // ============================================================================
@@ -733,6 +955,129 @@ async function multiDeviceLogs(
 }
 
 // ============================================================================
+// INTERACTION TOOLS (Advanced)
+// ============================================================================
+
+async function tapScreen(x: number, y: number, device?: string): Promise<string> {
+  const check = await requireAdvanced("tap_screen");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+    await execAsync(`adb ${deviceFlag} shell input tap ${x} ${y}`);
+    let result = `✅ Tapped at (${x}, ${y})`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error tapping screen: ${error.message}`;
+  }
+}
+
+async function inputText(text: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("input_text");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+    // Escape special characters for shell
+    const escapedText = text.replace(/([\\'"$ `])/g, "\\$1").replace(/ /g, "%s");
+    await execAsync(`adb ${deviceFlag} shell input text "${escapedText}"`);
+    let result = `✅ Typed: "${text}"`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error inputting text: ${error.message}`;
+  }
+}
+
+async function pressButton(button: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("press_button");
+  if (!check.allowed) return check.message!;
+
+  const keyMap: Record<string, number> = {
+    back: 4,
+    home: 3,
+    recent: 187,
+    volume_up: 24,
+    volume_down: 25,
+    power: 26,
+    enter: 66,
+  };
+
+  const keyCode = keyMap[button];
+  if (!keyCode) {
+    return `Unknown button: ${button}. Available: ${Object.keys(keyMap).join(", ")}`;
+  }
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+    await execAsync(`adb ${deviceFlag} shell input keyevent ${keyCode}`);
+    let result = `✅ Pressed: ${button.toUpperCase()}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error pressing button: ${error.message}`;
+  }
+}
+
+async function swipeScreen(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  duration: number = 300,
+  device?: string
+): Promise<string> {
+  const check = await requireAdvanced("swipe_screen");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+    await execAsync(`adb ${deviceFlag} shell input swipe ${startX} ${startY} ${endX} ${endY} ${duration}`);
+    let result = `✅ Swiped from (${startX}, ${startY}) to (${endX}, ${endY})`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error swiping: ${error.message}`;
+  }
+}
+
+async function launchApp(packageName: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("launch_app");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+    // Get the main activity using monkey
+    await execAsync(`adb ${deviceFlag} shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`);
+    let result = `✅ Launched: ${packageName}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error launching app: ${error.message}\n\nMake sure the package name is correct.`;
+  }
+}
+
+async function installApk(apkPath: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("install_apk");
+  if (!check.allowed) return check.message!;
+
+  if (!fs.existsSync(apkPath)) {
+    return `APK file not found: ${apkPath}`;
+  }
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+    const { stdout } = await execAsync(`adb ${deviceFlag} install -r "${apkPath}"`);
+    let result = `✅ APK installed successfully!\n\n${stdout}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error installing APK: ${error.message}`;
+  }
+}
+
+// ============================================================================
 // MCP SERVER SETUP
 // ============================================================================
 
@@ -786,15 +1131,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "screenshot_emulator": {
         const result = await screenshotEmulator(args?.device as string);
         if (result.success && result.data) {
-          return {
-            content: [
-              {
-                type: "image",
-                data: result.data,
-                mimeType: result.mimeType!,
-              },
-            ],
-          };
+          const content: any[] = [
+            {
+              type: "image",
+              data: result.data,
+              mimeType: result.mimeType!,
+            },
+          ];
+          // Add trial warning if present
+          if (result.trialMessage) {
+            content.push({ type: "text", text: result.trialMessage });
+          }
+          return { content };
         }
         return { content: [{ type: "text", text: result.error! }] };
       }
@@ -830,12 +1178,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "start_metro_logging": {
-        const result = startMetroLogging(args?.logFile as string);
+        const result = await startMetroLogging(args?.logFile as string);
         return { content: [{ type: "text", text: result }] };
       }
 
       case "stop_metro_logging": {
-        const result = stopMetroLogging();
+        const result = await stopMetroLogging();
         return { content: [{ type: "text", text: result }] };
       }
 
@@ -867,6 +1215,60 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const result = await multiDeviceLogs(
           args?.devices as string[],
           args?.lines as number
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      // INTERACTION TOOLS
+      case "tap_screen": {
+        const result = await tapScreen(
+          args?.x as number,
+          args?.y as number,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "input_text": {
+        const result = await inputText(
+          args?.text as string,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "press_button": {
+        const result = await pressButton(
+          args?.button as string,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "swipe_screen": {
+        const result = await swipeScreen(
+          args?.startX as number,
+          args?.startY as number,
+          args?.endX as number,
+          args?.endY as number,
+          args?.duration as number,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "launch_app": {
+        const result = await launchApp(
+          args?.packageName as string,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "install_apk": {
+        const result = await installApk(
+          args?.apkPath as string,
+          args?.device as string
         );
         return { content: [{ type: "text", text: result }] };
       }

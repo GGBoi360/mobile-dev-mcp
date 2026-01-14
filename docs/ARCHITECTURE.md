@@ -71,27 +71,39 @@
 
 ### Tier Structure:
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  FREE                          │  PRO ($12/mo or $99/yr)        │
-├────────────────────────────────┼────────────────────────────────┤
-│  ✓ ADB logs (50 lines)         │  ✓ Everything in Free          │
-│  ✓ Metro status check          │  ✓ Unlimited log lines         │
-│  ✓ Manual screenshots          │  ✓ Real-time log streaming     │
-│  ✓ List devices                │  ✓ Auto-screenshot on error    │
-│  ✓ Device info                 │  ✓ Screenshot history (20)     │
-│  ✓ Basic app info              │  ✓ Multi-device support        │
-│  ✓ Clear app data              │  ✓ iOS Simulator support       │
-│  ✓ Restart ADB                 │  ✓ React DevTools integration  │
-│                                │  ✓ Custom error alerts         │
-│                                │  ✓ Priority support            │
-└────────────────────────────────┴────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│  TRIAL (50 requests)  │  BASIC ($6/mo)          │  ADVANCED ($8/wk, $12/mo, $99/yr) │
+├───────────────────────┼─────────────────────────┼───────────────────────────────────┤
+│  ✓ All 24 tools       │  ✓ 13 core tools        │  ✓ All 24 tools                   │
+│  ✓ 50 log lines       │  ✓ 50 log lines         │  ✓ Unlimited log lines            │
+│  ✓ 1 device           │  ✓ 1 device             │  ✓ 3 devices                      │
+│  ✗ 50 requests limit  │  ✓ Unlimited requests   │  ✓ Unlimited requests             │
+│                       │  ✗ No streaming         │  ✓ Real-time log streaming        │
+│                       │  ✗ No history           │  ✓ Screenshot history (20)        │
+│                       │  ✗ No interaction tools │  ✓ Multi-device logs              │
+│                       │                         │  ✓ Error pattern watching         │
+│                       │                         │  ✓ Device interaction tools       │
+└───────────────────────┴─────────────────────────┴───────────────────────────────────┘
 ```
 
-### Why $12/month:
-- Low enough for individuals to justify
-- $99/year gives ~30% discount (incentivizes annual)
+### Core Tools (13 - All Tiers):
+get_metro_logs, get_adb_logs, screenshot_emulator, list_devices, check_metro_status,
+get_app_info, clear_app_data, restart_adb, get_device_info, start_metro_logging,
+stop_metro_logging, get_license_status, set_license_key
+
+### Advanced Tools (11 - Advanced Tier Only):
+**Streaming & Monitoring:**
+stream_adb_realtime, stop_adb_streaming, screenshot_history, watch_for_errors, multi_device_logs
+
+**Device Interaction:**
+tap_screen, input_text, press_button, swipe_screen, launch_app, install_apk
+
+### Why This Pricing:
+- **Basic $6/mo**: Low entry point for hobbyists, increased limits
+- **Advanced $12/mo**: Full features for professional mobile devs
+- **$8/week option**: For short-term projects or trying before committing
+- **$99/year**: ~30% discount, incentivizes annual commitment
 - Comparable to other dev tools (Raycast Pro: $8/mo, etc.)
-- Can always adjust based on demand
 
 ### Future: Team Tier ($49/month)
 - 5 seats included
@@ -106,6 +118,7 @@
 ~/.mobiledev-mcp/
 ├── config.json      # User preferences
 ├── license.json     # License cache
+├── trial.json       # Trial usage tracking
 └── logs/            # Debug logs (optional)
 ```
 
@@ -125,29 +138,40 @@
 {
   "key": "MDM_XXXX-XXXX-XXXX-XXXX",
   "valid": true,
-  "tier": "pro",
+  "tier": "advanced",
   "email": "user@example.com",
   "validatedAt": "2026-01-14T12:00:00Z",
   "expiresAt": "2027-01-14T12:00:00Z"
 }
 ```
 
+Note: `tier` can be `"trial"`, `"basic"`, or `"advanced"`.
+
 ## Validation API (Serverless)
 
-### Endpoint: POST /api/validate
+### Endpoint: POST /validate
 ```json
 // Request
 {
-  "licenseKey": "MDM_XXXX-XXXX-XXXX-XXXX",
-  "machineId": "hash-of-machine-info"
+  "license_key": "lk_XXXX-XXXX-XXXX-XXXX",
+  "instance_id": "hash-of-machine-info"
 }
 
 // Response (success)
 {
   "valid": true,
-  "tier": "pro",
-  "email": "user@example.com",
-  "expiresAt": "2027-01-14T12:00:00Z"
+  "tier": "basic",  // or "advanced"
+  "license_key": {
+    "status": "active",
+    "activation_limit": 3,
+    "activation_usage": 1,
+    "expires_at": "2027-01-14T12:00:00Z"
+  },
+  "meta": {
+    "customer_email": "user@example.com",
+    "product_name": "Mobile Dev MCP",
+    "variant_name": "Advanced Monthly"
+  }
 }
 
 // Response (invalid)
@@ -156,6 +180,8 @@
   "error": "License expired or invalid"
 }
 ```
+
+Note: Tier is determined by checking `variant_name` for "basic" or "advanced" keywords.
 
 ### Hosting Options:
 1. **Cloudflare Workers** (Recommended)
@@ -173,48 +199,51 @@
 ## Revenue Projections
 
 ### Conservative (First 6 months):
-- 500 free users
-- 25 pro users (5% conversion)
-- $300/month = $3,600/year
+- 500 trial users
+- 15 Basic users ($6/mo) + 10 Advanced users ($12/mo)
+- $210/month = $2,520/year
 
 ### Moderate (Year 1):
-- 2,000 free users
-- 150 pro users (7.5% conversion)
-- $1,800/month = $21,600/year
+- 2,000 trial users
+- 100 Basic users ($6/mo) + 50 Advanced users ($12/mo)
+- $1,200/month = $14,400/year
 
 ### Optimistic (Year 2+):
-- 10,000 free users
-- 500 pro users (5% conversion)
-- 20 team licenses
-- $7,000/month = $84,000/year
+- 10,000 trial users
+- 300 Basic users + 200 Advanced users + 20 team licenses ($49/mo)
+- $5,180/month = $62,160/year
 
 ## Launch Checklist
 
-### Phase 1: MVP Launch (Free)
-- [ ] Fix Metro logging bug
-- [ ] Complete screenshot function
-- [ ] Test all 11 tools
-- [ ] Push to GitHub
+### Phase 1: MVP Launch ✅
+- [x] Fix Metro logging bug
+- [x] Complete screenshot function
+- [x] Implement all 13 core tools
+- [x] Push to GitHub
 - [ ] Create demo GIF
 - [ ] Tweet at @anthropic, @boris_cherny
 - [ ] Post in React Native communities
 
-### Phase 2: Add Licensing (Week 2-3)
-- [ ] Set up LemonSqueezy account
-- [ ] Create product ($12/mo, $99/yr)
-- [ ] Build validation API (Cloudflare Workers)
-- [ ] Add license module to MCP server
-- [ ] Gate 3-4 pro features
-- [ ] Create landing page
+### Phase 2: Add Licensing ✅
+- [x] Set up LemonSqueezy account
+- [x] Create products (Basic $6/mo, Advanced $8/wk/$12/mo/$99/yr)
+- [x] Build validation API (Cloudflare Workers)
+- [x] Add license module to MCP server
+- [x] Gate 5 advanced features
+- [ ] Create landing page (mobile-dev-mcp.com)
 
-### Phase 3: Pro Features (Week 4-6)
-- [ ] Real-time log streaming
-- [ ] Screenshot on error
+### Phase 3: Pro Features ✅
+- [x] Real-time log streaming (stream_adb_realtime)
+- [x] Screenshot history (screenshot_history)
+- [x] Multi-device logs (multi_device_logs)
+- [x] Error pattern watching (watch_for_errors)
+- [x] Device interaction tools (tap_screen, input_text, press_button, swipe_screen, launch_app, install_apk)
 - [ ] iOS Simulator support
 - [ ] React DevTools integration
 
-### Phase 4: Scale (Month 2+)
-- [ ] Team tier
+### Phase 4: Scale (Upcoming)
+- [ ] Team tier ($49/mo)
 - [ ] Usage analytics
 - [ ] Referral program
 - [ ] Enterprise outreach
+- [ ] iOS Simulator support

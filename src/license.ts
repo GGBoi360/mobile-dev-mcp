@@ -2,16 +2,16 @@
  * License validation module for Mobile Dev MCP
  *
  * Tiers:
- * - FREE: No license (unusable demo)
- * - BASIC ($6/mo): Core 9 tools, 50 line limits, 1 device
- * - ADVANCED ($8/wk, $12/mo, $99/yr): All 17 tools, unlimited, multi-device
+ * - TRIAL: No license, 50 tool requests then blocked
+ * - BASIC ($6/mo): 13 core tools, 50 line limits, 1 device
+ * - ADVANCED ($8/wk, $12/mo, $99/yr): All 18 tools, unlimited, multi-device
  *
  * Handles:
  * - License key validation against API
  * - Local caching of license status
+ * - Trial usage tracking
  * - Graceful degradation when offline
  * - Feature gating based on tier
- * - Developer mode for testing
  */
 
 import * as fs from "fs";
@@ -20,21 +20,10 @@ import * as os from "os";
 import * as crypto from "crypto";
 
 // ============================================================================
-// DEVELOPER MODE
-// ============================================================================
-
-// Set DEVELOPER_MODE=true to bypass all license checks (for your own testing)
-const DEVELOPER_MODE = process.env.DEVELOPER_MODE === "true";
-
-if (DEVELOPER_MODE) {
-  console.error("⚠️  DEVELOPER MODE ENABLED - All features unlocked");
-}
-
-// ============================================================================
 // TYPES
 // ============================================================================
 
-export type LicenseTier = "free" | "basic" | "advanced";
+export type LicenseTier = "trial" | "basic" | "advanced";
 
 export interface LicenseInfo {
   key: string;
@@ -54,6 +43,13 @@ export interface Config {
   apiEndpoint: string;
 }
 
+export interface TrialInfo {
+  usageCount: number;
+  firstUsedAt: string;
+  lastUsedAt: string;
+  machineId: string;
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -61,6 +57,7 @@ export interface Config {
 const CONFIG_DIR = path.join(os.homedir(), ".mobiledev-mcp");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 const LICENSE_CACHE_FILE = path.join(CONFIG_DIR, "license.json");
+const TRIAL_FILE = path.join(CONFIG_DIR, "trial.json");
 
 // How long to trust cached license without revalidation
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -70,6 +67,9 @@ const GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Default API endpoint - UPDATE THIS after deploying your Cloudflare Worker!
 const DEFAULT_API_ENDPOINT = "https://mobiledev-license-api.giladworkersdev.workers.dev";
+
+// Trial settings
+const TRIAL_LIMIT = 50; // Number of tool requests allowed in trial
 
 // ============================================================================
 // FEATURE TIERS
@@ -99,6 +99,13 @@ export const ADVANCED_TOOLS = [
   "screenshot_history",
   "watch_for_errors",
   "multi_device_logs",
+  // Interaction tools
+  "tap_screen",
+  "input_text",
+  "press_button",
+  "swipe_screen",
+  "launch_app",
+  "install_apk",
 ] as const;
 
 export type BasicTool = (typeof BASIC_TOOLS)[number];
@@ -106,8 +113,8 @@ export type AdvancedTool = (typeof ADVANCED_TOOLS)[number];
 
 // Limits for each tier
 export const TIER_LIMITS = {
-  free: {
-    maxLogLines: 20,
+  trial: {
+    maxLogLines: 50, // Same as Basic during trial
     maxDevices: 1,
     screenshotHistory: 0,
   },
@@ -225,6 +232,108 @@ function isWithinGracePeriod(license: LicenseInfo): boolean {
 }
 
 // ============================================================================
+// TRIAL TRACKING
+// ============================================================================
+
+function loadTrialInfo(): TrialInfo | null {
+  if (!fs.existsSync(TRIAL_FILE)) {
+    return null;
+  }
+
+  try {
+    const raw = fs.readFileSync(TRIAL_FILE, "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveTrialInfo(trial: TrialInfo): void {
+  ensureConfigDir();
+  fs.writeFileSync(TRIAL_FILE, JSON.stringify(trial, null, 2));
+}
+
+function getMachineIdForTrial(): string {
+  const info = [
+    os.hostname(),
+    os.platform(),
+    os.arch(),
+    os.cpus()[0]?.model || "unknown",
+  ].join("|");
+
+  return crypto.createHash("sha256").update(info).digest("hex").substring(0, 32);
+}
+
+export function getTrialStatus(): { remaining: number; used: number; expired: boolean } {
+  const trial = loadTrialInfo();
+  if (!trial) {
+    return { remaining: TRIAL_LIMIT, used: 0, expired: false };
+  }
+
+  // Verify machine ID matches (prevent copying trial.json to new machines)
+  const currentMachineId = getMachineIdForTrial();
+  if (trial.machineId !== currentMachineId) {
+    return { remaining: TRIAL_LIMIT, used: 0, expired: false };
+  }
+
+  const remaining = Math.max(0, TRIAL_LIMIT - trial.usageCount);
+  return {
+    remaining,
+    used: trial.usageCount,
+    expired: remaining === 0,
+  };
+}
+
+export function incrementTrialUsage(): { allowed: boolean; remaining: number; message?: string } {
+  const machineId = getMachineIdForTrial();
+  let trial = loadTrialInfo();
+
+  // Initialize trial if needed
+  if (!trial || trial.machineId !== machineId) {
+    trial = {
+      usageCount: 0,
+      firstUsedAt: new Date().toISOString(),
+      lastUsedAt: new Date().toISOString(),
+      machineId,
+    };
+  }
+
+  // Check if trial expired
+  if (trial.usageCount >= TRIAL_LIMIT) {
+    return {
+      allowed: false,
+      remaining: 0,
+      message: `🔒 Trial expired! You've used all ${TRIAL_LIMIT} trial requests.
+
+To continue using Mobile Dev MCP, purchase a license:
+
+┌─────────────────────────────────────────┐
+│  Basic Solo    $6/month                 │
+│  → 13 core tools, 50 log lines          │
+├─────────────────────────────────────────┤
+│  Advanced Solo $12/month (or $99/year)  │
+│  → All 18 tools, unlimited logs         │
+│  → Real-time streaming, multi-device    │
+└─────────────────────────────────────────┘
+
+Purchase at: https://mobile-dev-mcp.com
+Then use 'set_license_key' to activate.`,
+    };
+  }
+
+  // Increment usage
+  trial.usageCount++;
+  trial.lastUsedAt = new Date().toISOString();
+  saveTrialInfo(trial);
+
+  const remaining = TRIAL_LIMIT - trial.usageCount;
+  return {
+    allowed: true,
+    remaining,
+  };
+}
+
+// ============================================================================
 // API VALIDATION
 // ============================================================================
 
@@ -299,7 +408,7 @@ async function validateWithApi(
     return {
       key: licenseKey,
       valid: false,
-      tier: "free",
+      tier: "trial",
       validatedAt: new Date().toISOString(),
     };
   } catch (error) {
@@ -315,16 +424,6 @@ async function validateWithApi(
 let cachedLicenseResult: LicenseInfo | null = null;
 
 export async function checkLicense(): Promise<LicenseInfo> {
-  // Developer mode - return advanced tier
-  if (DEVELOPER_MODE) {
-    return {
-      key: "DEVELOPER_MODE",
-      valid: true,
-      tier: "advanced",
-      validatedAt: new Date().toISOString(),
-    };
-  }
-
   // Return cached result if we've already checked this session
   if (cachedLicenseResult) {
     return cachedLicenseResult;
@@ -332,12 +431,12 @@ export async function checkLicense(): Promise<LicenseInfo> {
 
   const config = loadConfig();
 
-  // No license key configured - free tier
+  // No license key configured - trial mode
   if (!config.licenseKey) {
     cachedLicenseResult = {
       key: "",
       valid: false,
-      tier: "free",
+      tier: "trial",
       validatedAt: new Date().toISOString(),
     };
     return cachedLicenseResult;
@@ -371,11 +470,11 @@ export async function checkLicense(): Promise<LicenseInfo> {
     return cached;
   }
 
-  // No valid cache, API down - fall back to free
+  // No valid cache, API down - fall back to trial
   cachedLicenseResult = {
     key: config.licenseKey,
     valid: false,
-    tier: "free",
+    tier: "trial",
     validatedAt: new Date().toISOString(),
   };
   return cachedLicenseResult;
@@ -394,11 +493,6 @@ export function isBasicTool(toolName: string): boolean {
 }
 
 export async function canUseTool(toolName: string): Promise<boolean> {
-  // Developer mode - all tools available
-  if (DEVELOPER_MODE) {
-    return true;
-  }
-
   const license = await checkLicense();
 
   // Advanced tools require Advanced tier
@@ -419,23 +513,40 @@ export async function requireAdvanced(toolName: string): Promise<{
   allowed: boolean;
   message?: string;
 }> {
-  if (DEVELOPER_MODE) {
-    return { allowed: true };
-  }
-
   const license = await checkLicense();
 
+  // Advanced license holders always allowed
   if (license.valid && license.tier === "advanced") {
     return { allowed: true };
   }
 
-  const currentTier = license.valid ? license.tier : "free";
+  // Trial users can try Advanced tools (uses trial quota)
+  if (!license.valid || license.tier === "trial") {
+    const trialResult = incrementTrialUsage();
+    if (!trialResult.allowed) {
+      return {
+        allowed: false,
+        message: trialResult.message,
+      };
+    }
 
+    // Trial still has requests - allow with reminder
+    if (trialResult.remaining <= 10) {
+      return {
+        allowed: true,
+        message: `⚠️ Trial: ${trialResult.remaining} requests remaining. This is an Advanced feature - upgrade to keep using it!`,
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  // Basic tier users cannot use Advanced tools
   return {
     allowed: false,
     message: `🔒 "${toolName}" requires Advanced tier.
 
-Your current tier: ${currentTier.toUpperCase()}
+Your current tier: BASIC
 
 Upgrade to Advanced for:
 - Real-time log streaming
@@ -443,12 +554,11 @@ Upgrade to Advanced for:
 - Multi-device support (3 devices)
 - Error watching
 - Unlimited log lines
+- Device interaction (tap, type, swipe)
 
 Pricing: $8/week, $12/month, or $99/year
 
-Upgrade at: https://mobile-dev-mcp.com
-
-Or use 'set_license_key' if you already have a key.`,
+Upgrade at: https://mobile-dev-mcp.com`,
   };
 }
 
@@ -456,32 +566,31 @@ export async function requireBasic(toolName: string): Promise<{
   allowed: boolean;
   message?: string;
 }> {
-  if (DEVELOPER_MODE) {
-    return { allowed: true };
-  }
-
   const license = await checkLicense();
 
+  // Licensed users can always use basic tools
   if (license.valid) {
     return { allowed: true };
   }
 
-  return {
-    allowed: false,
-    message: `🔒 "${toolName}" requires a license.
+  // Trial users - check trial status
+  const trialResult = incrementTrialUsage();
+  if (!trialResult.allowed) {
+    return {
+      allowed: false,
+      message: trialResult.message,
+    };
+  }
 
-You're on the FREE tier.
+  // Trial still has requests - allow with reminder
+  if (trialResult.remaining <= 10) {
+    return {
+      allowed: true,
+      message: `⚠️ Trial: ${trialResult.remaining} requests remaining. Purchase a license to continue uninterrupted.`,
+    };
+  }
 
-Get Basic ($6/month) for:
-- All core debugging tools
-- 50 log lines per request
-- Metro + ADB integration
-- Screenshots
-
-Or Advanced ($8/wk, $12/mo, $99/yr) for everything.
-
-Purchase at: https://mobile-dev-mcp.com`,
-  };
+  return { allowed: true };
 }
 
 export function getTierLimits(tier: LicenseTier) {
@@ -489,10 +598,6 @@ export function getTierLimits(tier: LicenseTier) {
 }
 
 export async function getMaxLogLines(): Promise<number> {
-  if (DEVELOPER_MODE) {
-    return Infinity;
-  }
-
   const license = await checkLicense();
   return TIER_LIMITS[license.tier].maxLogLines;
 }
@@ -502,26 +607,33 @@ export async function getMaxLogLines(): Promise<number> {
 // ============================================================================
 
 export async function getLicenseStatus(): Promise<string> {
-  if (DEVELOPER_MODE) {
-    return `📋 License Status: DEVELOPER MODE
-
-⚠️  All features unlocked for testing.
-
-To disable: unset DEVELOPER_MODE environment variable.`;
-  }
-
   const license = await checkLicense();
   const config = loadConfig();
 
   if (!config.licenseKey) {
-    return `📋 License Status: FREE TIER
+    const trialStatus = getTrialStatus();
 
-No license key configured.
+    if (trialStatus.expired) {
+      return `📋 License Status: TRIAL EXPIRED
+
+You've used all ${TRIAL_LIMIT} trial requests.
 
 ┌─────────────────────────────────────────┐
-│  BETA OFFER: First 200 users!           │
-│  Basic tier FREE for first 3 months     │
-├─────────────────────────────────────────┤
+│  Basic Solo    $6/mo      → Core tools  │
+│  Advanced Solo $12/mo     → All features│
+│                $8/wk or $99/yr          │
+└─────────────────────────────────────────┘
+
+Purchase at: https://mobile-dev-mcp.com
+Then use 'set_license_key' to activate.`;
+    }
+
+    return `📋 License Status: TRIAL
+
+Trial requests remaining: ${trialStatus.remaining}/${TRIAL_LIMIT}
+Trial requests used: ${trialStatus.used}
+
+┌─────────────────────────────────────────┐
 │  Basic Solo    $6/mo      → Core tools  │
 │  Advanced Solo $12/mo     → All features│
 │                $8/wk or $99/yr          │

@@ -10,6 +10,16 @@ An MCP (Model Context Protocol) server that gives Claude real-time access to mob
 - **Device Management** - List devices, check status, restart ADB
 - **App Management** - Get app info, clear data for fresh testing
 
+## Pricing
+
+| Tier | Price | Features |
+|------|-------|----------|
+| **TRIAL** | Free (50 requests) | Try all 13 core tools, then purchase to continue |
+| **BASIC** | $6/month | 13 core tools, 50 log lines max, 1 device |
+| **ADVANCED** | $8/week, $12/month, or $99/year | All 18 tools, unlimited logs, 3 devices, real-time streaming |
+
+Purchase at: https://mobile-dev-mcp.com
+
 ## Installation
 
 ### Option 1: Claude Code Plugin (Recommended)
@@ -48,6 +58,8 @@ claude mcp add mobile-dev -- npx claude-mobile-dev-mcp
 
 ## Available Tools
 
+### Core Tools (All Tiers)
+
 | Tool | Description |
 |------|-------------|
 | `get_metro_logs` | Get recent Metro bundler logs with optional filtering |
@@ -61,6 +73,24 @@ claude mcp add mobile-dev -- npx claude-mobile-dev-mcp
 | `get_device_info` | Get detailed device information |
 | `start_metro_logging` | Start capturing Metro logs in background |
 | `stop_metro_logging` | Stop Metro log capture |
+| `get_license_status` | Check your current license tier and limits |
+| `set_license_key` | Activate a license key to unlock paid features |
+
+### Advanced Tools (Advanced Tier Only)
+
+| Tool | Description |
+|------|-------------|
+| `stream_adb_realtime` | Start real-time ADB log streaming in background |
+| `stop_adb_streaming` | Stop real-time ADB log streaming |
+| `screenshot_history` | Get previously captured screenshots (stores up to 20) |
+| `watch_for_errors` | Monitor logs for specific error patterns |
+| `multi_device_logs` | Get logs from multiple devices simultaneously |
+| `tap_screen` | Tap on the screen at specific coordinates |
+| `input_text` | Type text into the currently focused input field |
+| `press_button` | Press hardware buttons (back, home, recent, volume, power) |
+| `swipe_screen` | Swipe/scroll on the screen |
+| `launch_app` | Launch an app by package name |
+| `install_apk` | Install an APK file to the device |
 
 ## Usage Examples
 
@@ -87,20 +117,27 @@ Once installed, Claude can use these tools automatically:
 
 ## Roadmap
 
+- [x] Real-time log streaming (Advanced tier)
+- [x] Screenshot history (Advanced tier)
+- [x] Multi-device support (Advanced tier)
+- [x] Error pattern watching (Advanced tier)
 - [ ] iOS Simulator support (screenshots, logs)
-- [ ] Real-time log streaming (WebSocket)
 - [ ] React DevTools integration
 - [ ] Expo DevTools integration
 - [ ] Network request inspection
 - [ ] Performance metrics
+- [ ] Team tier with centralized license management
+
+## License Activation
+
+1. Purchase a license at https://mobile-dev-mcp.com
+2. You'll receive a license key via email
+3. Use the `set_license_key` tool to activate: `set_license_key` with your key
+4. Or add to config file: `~/.mobiledev-mcp/config.json`
 
 ## Contributing
 
-PRs welcome! This is an open-source project to make mobile dev with Claude actually usable.
-
-## License
-
-MIT
+PRs welcome! Help us make mobile dev with Claude actually usable.
 
 ---
 
