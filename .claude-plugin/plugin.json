@@ -1,0 +1,35 @@
+{
+  "name": "mobile-dev",
+  "version": "0.1.0",
+  "displayName": "Mobile Dev Tools",
+  "description": "MCP server for mobile development - stream Metro logs, capture emulator screenshots, monitor ADB logcat in real-time",
+  "author": "GGBoi360",
+  "license": "MIT",
+  "repository": "https://github.com/GGBoi360/claude-mobile-dev-mcp",
+  "keywords": [
+    "mobile",
+    "react-native",
+    "expo",
+    "android",
+    "ios",
+    "adb",
+    "metro",
+    "debugging"
+  ],
+  "mcp": {
+    "command": "node",
+    "args": ["dist/index.js"],
+    "cwd": "."
+  },
+  "requirements": {
+    "node": ">=18.0.0",
+    "external": [
+      {
+        "name": "adb",
+        "description": "Android Debug Bridge (part of Android SDK Platform Tools)",
+        "installUrl": "https://developer.android.com/tools/releases/platform-tools",
+        "optional": false
+      }
+    ]
+  }
+}

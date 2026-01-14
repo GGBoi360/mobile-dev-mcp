@@ -1,0 +1,23 @@
+{
+  "category": "Development Tools",
+  "tags": [
+    "mobile",
+    "react-native",
+    "expo",
+    "android",
+    "debugging",
+    "logging"
+  ],
+  "featured": false,
+  "screenshots": [],
+  "readme": "../README.md",
+  "changelog": "../CHANGELOG.md",
+  "support": {
+    "issues": "https://github.com/GGBoi360/claude-mobile-dev-mcp/issues",
+    "discussions": "https://github.com/GGBoi360/claude-mobile-dev-mcp/discussions"
+  },
+  "compatibility": {
+    "platforms": ["windows", "darwin", "linux"],
+    "claudeCode": ">=1.0.0"
+  }
+}
