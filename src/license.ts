@@ -69,7 +69,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Default API endpoint - UPDATE THIS after deploying your Cloudflare Worker!
-const DEFAULT_API_ENDPOINT = "https://mobiledev-license-api.workers.dev";
+const DEFAULT_API_ENDPOINT = "https://mobiledev-license-api.giladworkersdev.workers.dev";
 
 // ============================================================================
 // FEATURE TIERS
