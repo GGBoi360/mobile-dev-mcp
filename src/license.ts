@@ -4,7 +4,7 @@
  * Tiers:
  * - TRIAL: No license, 50 tool requests then blocked
  * - BASIC ($6/mo): 17 core tools (Android + iOS basics), 50 line limits, 1 device
- * - ADVANCED ($8/wk, $12/mo, $99/yr): All 46 tools, unlimited, multi-device
+ * - ADVANCED ($8/wk, $12/mo, $99/yr): All 56 tools, unlimited, multi-device
  *
  * Handles:
  * - License key validation against API
@@ -135,6 +135,18 @@ export const ADVANCED_TOOLS = [
   "stop_network_monitoring",
   "get_network_stats",
   "analyze_request",
+  // Expo DevTools integration
+  "check_expo_status",
+  "get_expo_config",
+  "expo_dev_menu",
+  "expo_reload",
+  "get_eas_builds",
+  // Performance metrics
+  "get_cpu_usage",
+  "get_memory_usage",
+  "get_fps_stats",
+  "get_battery_stats",
+  "get_performance_snapshot",
 ] as const;
 
 export type BasicTool = (typeof BASIC_TOOLS)[number];
@@ -341,7 +353,7 @@ To continue using Mobile Dev MCP, purchase a license:
 │  → 17 core tools, 50 log lines          │
 ├─────────────────────────────────────────┤
 │  Advanced Solo $12/month (or $99/year)  │
-│  → All 46 tools, unlimited logs         │
+│  → All 56 tools, unlimited logs         │
 │  → Real-time streaming, multi-device    │
 └─────────────────────────────────────────┘
 

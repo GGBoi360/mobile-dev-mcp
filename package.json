@@ -1,6 +1,6 @@
 {
   "name": "@ggboi360/mobile-dev-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for mobile development with Claude - stream Metro logs, capture screenshots, monitor ADB",
   "type": "module",
   "main": "dist/index.js",
@@ -10,6 +10,8 @@
   "files": [
     "dist/**/*",
     "LICENSE",
+    "LICENSE-MIT",
+    "LICENSE-ELASTIC",
     "README.md"
   ],
   "repository": {
@@ -36,11 +38,17 @@
     "react-native",
     "expo",
     "android",
+    "ios",
     "adb",
-    "metro"
+    "metro",
+    "open-source",
+    "open-core",
+    "debugging",
+    "devtools",
+    "react-devtools"
   ],
   "author": "GGBoi360",
-  "license": "Elastic-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "ws": "^8.18.0"

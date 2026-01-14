@@ -56,8 +56,8 @@ describe("Tool Classification", () => {
   });
 
   describe("ADVANCED_TOOLS constant", () => {
-    it("should have 29 advanced tools (11 Android + 8 iOS + 5 DevTools + 5 Network)", () => {
-      expect(ADVANCED_TOOLS).toHaveLength(29);
+    it("should have 39 advanced tools (11 Android + 8 iOS + 5 DevTools + 5 Network + 5 Expo + 5 Perf)", () => {
+      expect(ADVANCED_TOOLS).toHaveLength(39);
     });
 
     it("should include streaming tools", () => {
@@ -167,9 +167,9 @@ describe("Tier Limits", () => {
 // ============================================================================
 
 describe("Tool Counts (Documentation Alignment)", () => {
-  it("should have 46 total tools (17 basic + 29 advanced)", () => {
+  it("should have 56 total tools (17 basic + 39 advanced)", () => {
     const totalTools = BASIC_TOOLS.length + ADVANCED_TOOLS.length;
-    expect(totalTools).toBe(46);
+    expect(totalTools).toBe(56);
   });
 
   it("should not have overlapping tools between basic and advanced", () => {

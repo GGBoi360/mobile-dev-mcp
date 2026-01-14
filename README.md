@@ -1,6 +1,12 @@
 # Claude Mobile Dev MCP
 
+[![npm version](https://img.shields.io/npm/v/@ggboi360/mobile-dev-mcp.svg)](https://www.npmjs.com/package/@ggboi360/mobile-dev-mcp)
+[![License: MIT (Core)](https://img.shields.io/badge/License-MIT%20(Core)-green.svg)](LICENSE-MIT)
+[![License: Elastic 2.0 (Advanced)](https://img.shields.io/badge/License-Elastic%202.0%20(Advanced)-blue.svg)](LICENSE-ELASTIC)
+
 An MCP (Model Context Protocol) server that gives Claude real-time access to mobile development tools. Stop copy-pasting logs and screenshots - let Claude see your app directly!
+
+**Open Core**: 17 core tools are MIT licensed (free forever). 39 advanced tools are source-available under Elastic License 2.0.
 
 ## Features
 
@@ -11,14 +17,16 @@ An MCP (Model Context Protocol) server that gives Claude real-time access to mob
 - **Device Management** - List devices, check status, restart ADB
 - **App Management** - Get app info, clear data for fresh testing
 - **React DevTools Integration** - Inspect React component trees, props, and state
+- **Expo DevTools Integration** - Check Expo server status, manage config, trigger reloads, EAS builds
+- **Performance Metrics** - CPU, memory, FPS, and battery monitoring for your app
 
 ## Pricing
 
 | Tier | Price | Features |
 |------|-------|----------|
-| **TRIAL** | Free (50 requests) | Try all 46 tools, then purchase to continue |
+| **TRIAL** | Free (50 requests) | Try all 56 tools, then purchase to continue |
 | **BASIC** | $6/month | 17 core tools (Android + iOS basics), 50 log lines max, 1 device |
-| **ADVANCED** | $8/week, $12/month, or $99/year | All 46 tools, unlimited logs, 3 devices, streaming, DevTools, network inspection |
+| **ADVANCED** | $8/week, $12/month, or $99/year | All 56 tools, unlimited logs, 3 devices, streaming, DevTools, network, Expo, performance |
 
 Purchase at: https://mobile-dev-mcp.com
 
@@ -152,6 +160,26 @@ claude mcp add mobile-dev -- node /path/to/mobile-dev-mcp/dist/index.js
 | `get_network_stats` | Get device network statistics (WiFi, data usage) |
 | `analyze_request` | Analyze a specific captured request in detail |
 
+### Advanced Tools - Expo DevTools (Advanced Tier Only)
+
+| Tool | Description |
+|------|-------------|
+| `check_expo_status` | Check Expo dev server status and connected devices |
+| `get_expo_config` | Get Expo project configuration (app.json/app.config.js) |
+| `expo_dev_menu` | Open the Expo developer menu on device |
+| `expo_reload` | Trigger a reload of the Expo app |
+| `get_eas_builds` | Get recent EAS build status and download links |
+
+### Advanced Tools - Performance Metrics (Advanced Tier Only)
+
+| Tool | Description |
+|------|-------------|
+| `get_cpu_usage` | Get CPU usage for device or specific app |
+| `get_memory_usage` | Get memory usage (heap, native, PSS) for an app |
+| `get_fps_stats` | Get frame rendering stats (jank frames, percentiles) |
+| `get_battery_stats` | Get battery consumption by app |
+| `get_performance_snapshot` | Get all metrics at once for quick profiling |
+
 ## Usage Examples
 
 Once installed, Claude can use these tools automatically:
@@ -180,6 +208,24 @@ Once installed, Claude can use these tools automatically:
 **You:** "Monitor network traffic while I use the app"
 **Claude:** *Uses start_network_monitoring* "Network monitoring started. Make some requests, then I'll summarize them."
 
+**You:** "Is my Expo server running?"
+**Claude:** *Uses check_expo_status* "Expo is running on port 8081. Metro bundler active, 1 device connected."
+
+**You:** "Reload the app"
+**Claude:** *Uses expo_reload* "App reloaded! The JavaScript bundle has been refreshed."
+
+**You:** "Show me my EAS builds"
+**Claude:** *Uses get_eas_builds* "Found 3 recent builds: Android production (complete), iOS staging (in progress)..."
+
+**You:** "Is my app using too much memory?"
+**Claude:** *Uses get_memory_usage* "Your app is using 145 MB (PSS). Java heap: 45 MB, Native: 78 MB. This is within normal range."
+
+**You:** "Check the performance of com.myapp"
+**Claude:** *Uses get_performance_snapshot* "CPU: 12%, Memory: 145 MB, Frames: 2450 rendered, 3% janky. Battery: 85%, temp 32°C"
+
+**You:** "Why is my app laggy?"
+**Claude:** *Uses get_fps_stats* "Found 15% janky frames. 90th percentile frame time is 24ms (should be <16ms). Consider optimizing heavy UI operations."
+
 ## Workflow
 
 1. Start your Metro bundler: `npx expo start` or `npx react-native start`
@@ -196,8 +242,8 @@ Once installed, Claude can use these tools automatically:
 - [x] iOS Simulator support (screenshots, logs, app management)
 - [x] React DevTools integration (component tree, props, state inspection)
 - [x] Network request inspection (capture, monitor, analyze HTTP traffic)
-- [ ] Expo DevTools integration
-- [ ] Performance metrics
+- [x] Expo DevTools integration (server status, config, reload, EAS builds)
+- [x] Performance metrics (CPU, memory, FPS, battery monitoring)
 - [ ] Team tier with centralized license management
 
 ## License Activation

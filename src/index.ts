@@ -826,6 +826,186 @@ const coreTools: Tool[] = [
       required: ["index"],
     },
   },
+
+  // === EXPO DEVTOOLS INTEGRATION ===
+  {
+    name: "check_expo_status",
+    description:
+      "[PRO] Check Expo dev server status. Shows bundler status, dev client connection, and tunnel URLs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        port: {
+          type: "number",
+          description: "Expo bundler port (default: 8081 for Expo SDK 49+, 19000 for older)",
+          default: 8081,
+        },
+      },
+    },
+  },
+  {
+    name: "get_expo_config",
+    description:
+      "[PRO] Get Expo project configuration from app.json or app.config.js. Shows app name, version, plugins, and more.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        projectPath: {
+          type: "string",
+          description: "Path to Expo project directory (default: current directory)",
+        },
+      },
+    },
+  },
+  {
+    name: "expo_dev_menu",
+    description:
+      "[PRO] Open the Expo developer menu on the connected device. Equivalent to shaking the device or pressing 'd' in terminal.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "expo_reload",
+    description:
+      "[PRO] Trigger a reload of the Expo app. Refreshes the JavaScript bundle without a full rebuild.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_eas_builds",
+    description:
+      "[PRO] Get recent EAS (Expo Application Services) build status. Shows build history for your project.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        platform: {
+          type: "string",
+          enum: ["android", "ios", "all"],
+          description: "Platform to show builds for (default: all)",
+          default: "all",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of builds to show (default: 5)",
+          default: 5,
+        },
+      },
+    },
+  },
+
+  // === PERFORMANCE METRICS TOOLS ===
+  {
+    name: "get_cpu_usage",
+    description:
+      "[PRO] Get CPU usage for device or specific app. Shows per-core and per-process CPU consumption.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        packageName: {
+          type: "string",
+          description: "App package name to filter (optional, shows all if not specified)",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_memory_usage",
+    description:
+      "[PRO] Get memory usage for a specific app. Shows heap, native, graphics, and total memory consumption.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        packageName: {
+          type: "string",
+          description: "App package name (required)",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["packageName"],
+    },
+  },
+  {
+    name: "get_fps_stats",
+    description:
+      "[PRO] Get frame rendering statistics (FPS). Shows jank frames, slow renders, and frame timing histogram.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        packageName: {
+          type: "string",
+          description: "App package name (required)",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+        reset: {
+          type: "boolean",
+          description: "Reset stats before measuring (default: false)",
+          default: false,
+        },
+      },
+      required: ["packageName"],
+    },
+  },
+  {
+    name: "get_battery_stats",
+    description:
+      "[PRO] Get battery consumption statistics. Shows power usage by app and component.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        packageName: {
+          type: "string",
+          description: "App package name to filter (optional)",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_performance_snapshot",
+    description:
+      "[PRO] Get a comprehensive performance snapshot including CPU, memory, FPS, and battery stats for an app.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        packageName: {
+          type: "string",
+          description: "App package name (required)",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+      required: ["packageName"],
+    },
+  },
 ];
 
 // Combine core tools with license tools
@@ -2783,6 +2963,832 @@ async function analyzeRequest(index: number): Promise<string> {
 }
 
 // ============================================================================
+// EXPO DEVTOOLS INTEGRATION
+// ============================================================================
+
+async function checkExpoStatus(port: number = 8081): Promise<string> {
+  const check = await requireAdvanced("check_expo_status");
+  if (!check.allowed) return check.message!;
+
+  const resultLines: string[] = [];
+  resultLines.push("📱 Expo Dev Server Status");
+  resultLines.push("═".repeat(50));
+
+  // Check multiple ports that Expo might use
+  const portsToCheck = [
+    { port, name: "Metro Bundler" },
+    { port: 19000, name: "Legacy Bundler" },
+    { port: 19001, name: "WebSocket" },
+    { port: 19002, name: "DevTools UI" },
+  ];
+
+  let anyRunning = false;
+
+  for (const { port: p, name } of portsToCheck) {
+    try {
+      const response = await new Promise<string>((resolve, reject) => {
+        const req = http.request(
+          { hostname: "localhost", port: p, path: "/status", method: "GET", timeout: 2000 },
+          (res) => {
+            let data = "";
+            res.on("data", (chunk) => (data += chunk));
+            res.on("end", () => resolve(data));
+          }
+        );
+        req.on("error", reject);
+        req.on("timeout", () => reject(new Error("timeout")));
+        req.end();
+      });
+
+      resultLines.push(`\n✅ ${name} (port ${p}): Running`);
+      if (response && response.length > 0 && response.length < 200) {
+        resultLines.push(`   Status: ${response.trim()}`);
+      }
+      anyRunning = true;
+    } catch {
+      // Port not responding, check if it's a different status endpoint
+      try {
+        // Try the root endpoint for bundler status
+        const response = await new Promise<string>((resolve, reject) => {
+          const req = http.request(
+            { hostname: "localhost", port: p, path: "/", method: "GET", timeout: 1000 },
+            (res) => {
+              let data = "";
+              res.on("data", (chunk) => (data += chunk));
+              res.on("end", () => resolve(`HTTP ${res.statusCode}`));
+            }
+          );
+          req.on("error", reject);
+          req.on("timeout", () => reject(new Error("timeout")));
+          req.end();
+        });
+        resultLines.push(`\n✅ ${name} (port ${p}): Running (${response})`);
+        anyRunning = true;
+      } catch {
+        resultLines.push(`\n⚪ ${name} (port ${p}): Not running`);
+      }
+    }
+  }
+
+  // Get Expo CLI version if available
+  try {
+    const { stdout: expoVersion } = await execAsync("npx expo --version", { timeout: 5000 });
+    resultLines.push(`\n📦 Expo CLI: v${expoVersion.trim()}`);
+  } catch {
+    resultLines.push("\n📦 Expo CLI: Not detected");
+  }
+
+  // Check if any device is connected
+  try {
+    const { stdout: devices } = await execAsync("adb devices");
+    const deviceLines = devices.split("\n").filter(line => line.includes("\tdevice"));
+    if (deviceLines.length > 0) {
+      resultLines.push(`\n📱 Connected devices: ${deviceLines.length}`);
+    }
+  } catch {
+    // ADB not available
+  }
+
+  if (!anyRunning) {
+    resultLines.push("\n⚠️  No Expo dev server detected. Start with:");
+    resultLines.push("   npx expo start");
+  }
+
+  let result = resultLines.join("\n");
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+async function getExpoConfig(projectPath?: string): Promise<string> {
+  const check = await requireAdvanced("get_expo_config");
+  if (!check.allowed) return check.message!;
+
+  const cwd = projectPath || process.cwd();
+  const resultLines: string[] = [];
+  resultLines.push("📋 Expo Project Configuration");
+  resultLines.push("═".repeat(50));
+
+  // Try to read app.json
+  const appJsonPath = path.join(cwd, "app.json");
+  const appConfigJsPath = path.join(cwd, "app.config.js");
+  const appConfigTsPath = path.join(cwd, "app.config.ts");
+
+  let config: any = null;
+
+  if (fs.existsSync(appJsonPath)) {
+    try {
+      const content = fs.readFileSync(appJsonPath, "utf-8");
+      config = JSON.parse(content);
+      resultLines.push(`\nSource: app.json`);
+    } catch (err) {
+      resultLines.push(`\n❌ Error reading app.json: ${err}`);
+    }
+  } else if (fs.existsSync(appConfigJsPath)) {
+    resultLines.push(`\nSource: app.config.js (dynamic config)`);
+    // Can't easily evaluate JS config, suggest using expo config
+    try {
+      const { stdout } = await execAsync("npx expo config --json", { cwd, timeout: 10000 });
+      config = JSON.parse(stdout);
+    } catch {
+      resultLines.push("⚠️  Run 'npx expo config' to see resolved config");
+    }
+  } else if (fs.existsSync(appConfigTsPath)) {
+    resultLines.push(`\nSource: app.config.ts (TypeScript config)`);
+    try {
+      const { stdout } = await execAsync("npx expo config --json", { cwd, timeout: 10000 });
+      config = JSON.parse(stdout);
+    } catch {
+      resultLines.push("⚠️  Run 'npx expo config' to see resolved config");
+    }
+  } else {
+    resultLines.push(`\n❌ No Expo config found in: ${cwd}`);
+    resultLines.push("\nLooking for: app.json, app.config.js, or app.config.ts");
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+
+  if (config) {
+    const expo = config.expo || config;
+    resultLines.push(`\n📱 App Name: ${expo.name || "N/A"}`);
+    resultLines.push(`📌 Slug: ${expo.slug || "N/A"}`);
+    resultLines.push(`📦 Version: ${expo.version || "N/A"}`);
+    resultLines.push(`🔧 SDK Version: ${expo.sdkVersion || "N/A"}`);
+
+    if (expo.ios) {
+      resultLines.push(`\n🍎 iOS:`);
+      resultLines.push(`   Bundle ID: ${expo.ios.bundleIdentifier || "N/A"}`);
+      if (expo.ios.buildNumber) resultLines.push(`   Build: ${expo.ios.buildNumber}`);
+    }
+
+    if (expo.android) {
+      resultLines.push(`\n🤖 Android:`);
+      resultLines.push(`   Package: ${expo.android.package || "N/A"}`);
+      if (expo.android.versionCode) resultLines.push(`   Version Code: ${expo.android.versionCode}`);
+    }
+
+    if (expo.plugins && expo.plugins.length > 0) {
+      resultLines.push(`\n🔌 Plugins (${expo.plugins.length}):`);
+      for (const plugin of expo.plugins.slice(0, 10)) {
+        const pluginName = Array.isArray(plugin) ? plugin[0] : plugin;
+        resultLines.push(`   - ${pluginName}`);
+      }
+      if (expo.plugins.length > 10) {
+        resultLines.push(`   ... and ${expo.plugins.length - 10} more`);
+      }
+    }
+
+    if (expo.extra) {
+      resultLines.push(`\n📎 Extra Config: ${JSON.stringify(expo.extra).substring(0, 100)}...`);
+    }
+  }
+
+  let result = resultLines.join("\n");
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+async function expoDevMenu(device?: string): Promise<string> {
+  const check = await requireAdvanced("expo_dev_menu");
+  if (!check.allowed) return check.message!;
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  try {
+    // The developer menu in React Native/Expo is triggered by shaking the device
+    // We can simulate this with a combination of keyboard events or the menu keycode
+    // KEYCODE_MENU = 82 opens the dev menu on most RN/Expo apps
+
+    await execAsync(`adb ${deviceFlag} shell input keyevent 82`);
+
+    let result = `✅ Developer menu triggered
+
+The Expo/React Native developer menu should now be visible.
+
+Available options typically include:
+- Reload
+- Go to Expo Home
+- Toggle Inspector
+- Toggle Performance Monitor
+- Show Element Inspector
+- Open JS Debugger
+- Fast Refresh settings`;
+
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error opening dev menu: ${error.message}\n\nMake sure a device is connected: adb devices`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+async function expoReload(device?: string): Promise<string> {
+  const check = await requireAdvanced("expo_reload");
+  if (!check.allowed) return check.message!;
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  try {
+    // Method 1: Send reload broadcast to Expo/RN
+    // Double-tap R in dev menu typically reloads
+    // KEYCODE_R = 46, but we need to simulate the reload command
+
+    // First try to use the reload command via adb
+    // Many Expo apps respond to the "RR" double-tap
+    await execAsync(`adb ${deviceFlag} shell input keyevent 82`); // Open menu
+    await new Promise(resolve => setTimeout(resolve, 300)); // Wait for menu
+    await execAsync(`adb ${deviceFlag} shell input text r`); // Press 'r' to reload
+
+    // Alternative: Send the reload intent directly if app supports it
+    try {
+      // Try sending a reload broadcast (works on some Expo setups)
+      await execAsync(`adb ${deviceFlag} shell am broadcast -a "com.facebook.react.reload"`);
+    } catch {
+      // Not all apps support this broadcast
+    }
+
+    let result = `🔄 Reload triggered!
+
+The app should now be reloading its JavaScript bundle.
+
+If the app didn't reload, try:
+1. Press 'r' twice quickly in the Metro terminal
+2. Use expo_dev_menu and select "Reload"
+3. Shake the device to open dev menu`;
+
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error triggering reload: ${error.message}\n\nMake sure a device is connected: adb devices`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+async function getEasBuilds(platform: string = "all", limit: number = 5): Promise<string> {
+  const check = await requireAdvanced("get_eas_builds");
+  if (!check.allowed) return check.message!;
+
+  const resultLines: string[] = [];
+  resultLines.push("🏗️  EAS Build Status");
+  resultLines.push("═".repeat(50));
+
+  try {
+    // Check if eas-cli is available
+    await execAsync("npx eas-cli --version", { timeout: 5000 });
+
+    // Get build list
+    const platformFlag = platform !== "all" ? `--platform ${platform}` : "";
+    const { stdout } = await execAsync(
+      `npx eas-cli build:list ${platformFlag} --limit ${limit} --json --non-interactive`,
+      { timeout: 30000 }
+    );
+
+    let builds: any[] = [];
+    try {
+      builds = JSON.parse(stdout);
+    } catch {
+      // Sometimes eas-cli outputs extra text before JSON
+      const jsonMatch = stdout.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        builds = JSON.parse(jsonMatch[0]);
+      }
+    }
+
+    if (builds.length === 0) {
+      resultLines.push("\nNo builds found.");
+      resultLines.push("\nTo create a build:");
+      resultLines.push("  npx eas-cli build --platform android");
+      resultLines.push("  npx eas-cli build --platform ios");
+    } else {
+      resultLines.push(`\nShowing ${builds.length} most recent builds:\n`);
+
+      for (const build of builds) {
+        const platformEmoji = build.platform === "ANDROID" ? "🤖" : "🍎";
+        const statusEmoji = build.status === "FINISHED" ? "✅" :
+                           build.status === "IN_PROGRESS" ? "🔄" :
+                           build.status === "ERRORED" ? "❌" : "⏳";
+
+        resultLines.push(`${statusEmoji} ${platformEmoji} ${build.platform}`);
+        resultLines.push(`   Build ID: ${build.id}`);
+        resultLines.push(`   Status: ${build.status}`);
+        resultLines.push(`   Profile: ${build.buildProfile || "N/A"}`);
+        resultLines.push(`   Started: ${new Date(build.createdAt).toLocaleString()}`);
+
+        if (build.status === "FINISHED" && build.artifacts?.buildUrl) {
+          resultLines.push(`   📥 Download: ${build.artifacts.buildUrl}`);
+        }
+
+        if (build.error) {
+          resultLines.push(`   ❌ Error: ${build.error.message || build.error}`);
+        }
+
+        resultLines.push("");
+      }
+    }
+  } catch (error: any) {
+    if (error.message?.includes("not found") || error.message?.includes("ENOENT")) {
+      resultLines.push("\n❌ EAS CLI not found");
+      resultLines.push("\nInstall with: npm install -g eas-cli");
+      resultLines.push("Then login: npx eas-cli login");
+    } else if (error.message?.includes("not logged in") || error.message?.includes("AUTH")) {
+      resultLines.push("\n❌ Not logged in to EAS");
+      resultLines.push("\nLogin with: npx eas-cli login");
+    } else {
+      resultLines.push(`\n❌ Error: ${error.message}`);
+      resultLines.push("\nMake sure you're in an Expo project directory with eas.json");
+    }
+  }
+
+  let result = resultLines.join("\n");
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+// ============================================================================
+// PERFORMANCE METRICS
+// ============================================================================
+
+async function getCpuUsage(packageName?: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("get_cpu_usage");
+  if (!check.allowed) return check.message!;
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  try {
+    const resultLines: string[] = [];
+    resultLines.push("📊 CPU Usage");
+    resultLines.push("═".repeat(50));
+
+    // Get overall CPU info
+    const { stdout: cpuInfo } = await execAsync(
+      `adb ${deviceFlag} shell dumpsys cpuinfo`,
+      { maxBuffer: 2 * 1024 * 1024 }
+    );
+
+    // Parse CPU usage
+    const lines = cpuInfo.split("\n");
+    const totalMatch = lines.find(line => line.includes("TOTAL"));
+    if (totalMatch) {
+      resultLines.push(`\n${totalMatch.trim()}`);
+    }
+
+    // If package specified, filter for that app
+    if (packageName) {
+      resultLines.push(`\n📱 App: ${packageName}`);
+      const appLines = lines.filter(line =>
+        line.toLowerCase().includes(packageName.toLowerCase())
+      );
+      if (appLines.length > 0) {
+        appLines.forEach(line => {
+          resultLines.push(`  ${line.trim()}`);
+        });
+      } else {
+        resultLines.push("  App not found in CPU stats (may not be running)");
+      }
+    } else {
+      // Show top processes
+      resultLines.push("\n🔝 Top Processes:");
+      const processLines = lines
+        .filter(line => line.includes("%") && !line.includes("TOTAL"))
+        .slice(0, 10);
+      processLines.forEach(line => {
+        resultLines.push(`  ${line.trim()}`);
+      });
+    }
+
+    // Get per-core usage
+    try {
+      const { stdout: coreInfo } = await execAsync(
+        `adb ${deviceFlag} shell cat /proc/stat`,
+        { timeout: 5000 }
+      );
+      const coreLines = coreInfo.split("\n").filter(line => line.startsWith("cpu"));
+      if (coreLines.length > 1) {
+        resultLines.push(`\n💻 CPU Cores: ${coreLines.length - 1}`);
+      }
+    } catch {
+      // Core info not available
+    }
+
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error getting CPU usage: ${error.message}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+async function getMemoryUsage(packageName: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("get_memory_usage");
+  if (!check.allowed) return check.message!;
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  try {
+    const resultLines: string[] = [];
+    resultLines.push("🧠 Memory Usage");
+    resultLines.push("═".repeat(50));
+    resultLines.push(`\n📱 App: ${packageName}\n`);
+
+    // Get detailed memory info for the app
+    const { stdout: memInfo } = await execAsync(
+      `adb ${deviceFlag} shell dumpsys meminfo ${packageName}`,
+      { maxBuffer: 2 * 1024 * 1024 }
+    );
+
+    // Parse key memory metrics
+    const lines = memInfo.split("\n");
+
+    // Find summary section
+    const summaryStart = lines.findIndex(line => line.includes("App Summary"));
+    if (summaryStart !== -1) {
+      resultLines.push("📋 App Summary:");
+      for (let i = summaryStart + 1; i < Math.min(summaryStart + 10, lines.length); i++) {
+        const line = lines[i].trim();
+        if (line && !line.startsWith("--")) {
+          resultLines.push(`  ${line}`);
+        }
+        if (line.includes("TOTAL")) break;
+      }
+    }
+
+    // Find PSS and heap info
+    const pssMatch = memInfo.match(/TOTAL PSS:\s+(\d+)/i) || memInfo.match(/TOTAL:\s+(\d+)/);
+    const heapMatch = memInfo.match(/Native Heap:\s+(\d+)/);
+    const javaHeapMatch = memInfo.match(/Java Heap:\s+(\d+)/);
+
+    if (pssMatch || heapMatch) {
+      resultLines.push("\n📊 Key Metrics:");
+      if (pssMatch) {
+        const pssKb = parseInt(pssMatch[1]);
+        resultLines.push(`  Total PSS: ${(pssKb / 1024).toFixed(1)} MB`);
+      }
+      if (javaHeapMatch) {
+        const heapKb = parseInt(javaHeapMatch[1]);
+        resultLines.push(`  Java Heap: ${(heapKb / 1024).toFixed(1)} MB`);
+      }
+      if (heapMatch) {
+        const nativeKb = parseInt(heapMatch[1]);
+        resultLines.push(`  Native Heap: ${(nativeKb / 1024).toFixed(1)} MB`);
+      }
+    }
+
+    // Memory warnings
+    if (memInfo.includes("Low memory")) {
+      resultLines.push("\n⚠️  Warning: Device is in low memory state");
+    }
+
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    if (error.message?.includes("No process found")) {
+      let result = `App '${packageName}' is not running.\n\nStart the app first, then check memory usage.`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
+    }
+    let result = `Error getting memory usage: ${error.message}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+async function getFpsStats(packageName: string, device?: string, reset: boolean = false): Promise<string> {
+  const check = await requireAdvanced("get_fps_stats");
+  if (!check.allowed) return check.message!;
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  try {
+    const resultLines: string[] = [];
+    resultLines.push("🎮 Frame Rendering Stats (FPS)");
+    resultLines.push("═".repeat(50));
+    resultLines.push(`\n📱 App: ${packageName}\n`);
+
+    // Reset stats if requested
+    if (reset) {
+      await execAsync(`adb ${deviceFlag} shell dumpsys gfxinfo ${packageName} reset`);
+      resultLines.push("📊 Stats reset. Interact with the app, then run this tool again.\n");
+    }
+
+    // Get graphics info
+    const { stdout: gfxInfo } = await execAsync(
+      `adb ${deviceFlag} shell dumpsys gfxinfo ${packageName}`,
+      { maxBuffer: 2 * 1024 * 1024 }
+    );
+
+    const lines = gfxInfo.split("\n");
+
+    // Parse total frames
+    const totalMatch = gfxInfo.match(/Total frames rendered:\s*(\d+)/);
+    const jankyMatch = gfxInfo.match(/Janky frames:\s*(\d+)\s*\(([^)]+)\)/);
+    const percentile50 = gfxInfo.match(/50th percentile:\s*(\d+)ms/);
+    const percentile90 = gfxInfo.match(/90th percentile:\s*(\d+)ms/);
+    const percentile95 = gfxInfo.match(/95th percentile:\s*(\d+)ms/);
+    const percentile99 = gfxInfo.match(/99th percentile:\s*(\d+)ms/);
+
+    if (totalMatch) {
+      const totalFrames = parseInt(totalMatch[1]);
+      resultLines.push(`📈 Total Frames: ${totalFrames}`);
+
+      if (jankyMatch) {
+        const jankyFrames = parseInt(jankyMatch[1]);
+        const jankyPercent = jankyMatch[2];
+        resultLines.push(`🐌 Janky Frames: ${jankyFrames} (${jankyPercent})`);
+
+        // Calculate smooth FPS estimate
+        const smoothFrames = totalFrames - jankyFrames;
+        const smoothPercent = ((smoothFrames / totalFrames) * 100).toFixed(1);
+        resultLines.push(`✨ Smooth Frames: ${smoothFrames} (${smoothPercent}%)`);
+      }
+    }
+
+    // Frame timing percentiles
+    if (percentile50 || percentile90) {
+      resultLines.push("\n⏱️  Frame Time Percentiles:");
+      if (percentile50) resultLines.push(`  50th: ${percentile50[1]}ms`);
+      if (percentile90) resultLines.push(`  90th: ${percentile90[1]}ms`);
+      if (percentile95) resultLines.push(`  95th: ${percentile95[1]}ms`);
+      if (percentile99) resultLines.push(`  99th: ${percentile99[1]}ms`);
+    }
+
+    // Look for slow frames breakdown
+    const slowUIMatch = gfxInfo.match(/Number Slow UI thread:\s*(\d+)/);
+    const slowBitmapMatch = gfxInfo.match(/Number Slow bitmap uploads:\s*(\d+)/);
+    const slowDrawMatch = gfxInfo.match(/Number Slow issue draw commands:\s*(\d+)/);
+
+    if (slowUIMatch || slowBitmapMatch || slowDrawMatch) {
+      resultLines.push("\n🔍 Slow Frame Analysis:");
+      if (slowUIMatch && parseInt(slowUIMatch[1]) > 0) {
+        resultLines.push(`  Slow UI thread: ${slowUIMatch[1]}`);
+      }
+      if (slowBitmapMatch && parseInt(slowBitmapMatch[1]) > 0) {
+        resultLines.push(`  Slow bitmap uploads: ${slowBitmapMatch[1]}`);
+      }
+      if (slowDrawMatch && parseInt(slowDrawMatch[1]) > 0) {
+        resultLines.push(`  Slow draw commands: ${slowDrawMatch[1]}`);
+      }
+    }
+
+    // Performance recommendation
+    if (jankyMatch) {
+      const jankyPercent = parseFloat(jankyMatch[2]);
+      if (jankyPercent > 10) {
+        resultLines.push("\n⚠️  Performance Issue: High jank percentage");
+        resultLines.push("   Consider optimizing heavy UI operations");
+      } else if (jankyPercent < 5) {
+        resultLines.push("\n✅ Good Performance: Low jank percentage");
+      }
+    }
+
+    if (!totalMatch) {
+      resultLines.push("No frame data available.");
+      resultLines.push("Make sure the app is visible and interact with it first.");
+    }
+
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error getting FPS stats: ${error.message}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+async function getBatteryStats(packageName?: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("get_battery_stats");
+  if (!check.allowed) return check.message!;
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  try {
+    const resultLines: string[] = [];
+    resultLines.push("🔋 Battery Statistics");
+    resultLines.push("═".repeat(50));
+
+    // Get current battery level and status
+    const { stdout: batteryInfo } = await execAsync(
+      `adb ${deviceFlag} shell dumpsys battery`,
+      { timeout: 5000 }
+    );
+
+    const levelMatch = batteryInfo.match(/level:\s*(\d+)/);
+    const statusMatch = batteryInfo.match(/status:\s*(\d+)/);
+    const healthMatch = batteryInfo.match(/health:\s*(\d+)/);
+    const tempMatch = batteryInfo.match(/temperature:\s*(\d+)/);
+
+    resultLines.push("\n📊 Current Status:");
+    if (levelMatch) {
+      resultLines.push(`  Battery Level: ${levelMatch[1]}%`);
+    }
+    if (statusMatch) {
+      const statuses = ["Unknown", "Charging", "Discharging", "Not charging", "Full"];
+      const status = statuses[parseInt(statusMatch[1])] || "Unknown";
+      resultLines.push(`  Status: ${status}`);
+    }
+    if (tempMatch) {
+      const temp = parseInt(tempMatch[1]) / 10;
+      resultLines.push(`  Temperature: ${temp}°C`);
+    }
+
+    // Get battery stats (power consumption)
+    if (packageName) {
+      resultLines.push(`\n📱 App: ${packageName}`);
+
+      try {
+        const { stdout: appStats } = await execAsync(
+          `adb ${deviceFlag} shell dumpsys batterystats ${packageName}`,
+          { maxBuffer: 5 * 1024 * 1024, timeout: 10000 }
+        );
+
+        // Parse power usage
+        const powerMatch = appStats.match(/Estimated power use \(mAh\)[\s\S]*?Uid \S+:\s*([\d.]+)/);
+        if (powerMatch) {
+          resultLines.push(`  Power Used: ${powerMatch[1]} mAh`);
+        }
+
+        // CPU time
+        const cpuMatch = appStats.match(/Total cpu time:\s*u=(\d+)ms\s*s=(\d+)ms/);
+        if (cpuMatch) {
+          const userMs = parseInt(cpuMatch[1]);
+          const sysMs = parseInt(cpuMatch[2]);
+          resultLines.push(`  CPU Time: ${((userMs + sysMs) / 1000).toFixed(1)}s (user: ${(userMs/1000).toFixed(1)}s, sys: ${(sysMs/1000).toFixed(1)}s)`);
+        }
+
+        // Network usage
+        const networkMatch = appStats.match(/Network:\s*([\d.]+)\s*MB\s*received,\s*([\d.]+)\s*MB\s*transmitted/i);
+        if (networkMatch) {
+          resultLines.push(`  Network: ${networkMatch[1]} MB ↓, ${networkMatch[2]} MB ↑`);
+        }
+
+        // Wakelock time
+        const wakelockMatch = appStats.match(/Wake lock\s+\S+\s+.*?realtime=(\d+)/);
+        if (wakelockMatch) {
+          const wakeSec = parseInt(wakelockMatch[1]) / 1000;
+          if (wakeSec > 0) {
+            resultLines.push(`  Wake Lock: ${wakeSec.toFixed(1)}s`);
+          }
+        }
+      } catch {
+        resultLines.push("  Detailed stats not available for this app");
+      }
+    } else {
+      // Show top battery consumers
+      resultLines.push("\n🔝 Top Power Consumers:");
+      try {
+        const { stdout: stats } = await execAsync(
+          `adb ${deviceFlag} shell dumpsys batterystats`,
+          { maxBuffer: 10 * 1024 * 1024, timeout: 15000 }
+        );
+
+        // Parse estimated power section
+        const powerSection = stats.match(/Estimated power use[\s\S]*?(?=\n\n|\nStatistics)/);
+        if (powerSection) {
+          const powerLines = powerSection[0].split("\n").slice(1, 8);
+          powerLines.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith("Estimated")) {
+              resultLines.push(`  ${trimmed}`);
+            }
+          });
+        }
+      } catch {
+        resultLines.push("  Could not retrieve detailed battery stats");
+      }
+    }
+
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error getting battery stats: ${error.message}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+async function getPerformanceSnapshot(packageName: string, device?: string): Promise<string> {
+  const check = await requireAdvanced("get_performance_snapshot");
+  if (!check.allowed) return check.message!;
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  try {
+    const resultLines: string[] = [];
+    resultLines.push("📊 Performance Snapshot");
+    resultLines.push("═".repeat(50));
+    resultLines.push(`\n📱 App: ${packageName}`);
+    resultLines.push(`⏰ Time: ${new Date().toLocaleString()}\n`);
+
+    // CPU Usage
+    try {
+      const { stdout: cpuInfo } = await execAsync(
+        `adb ${deviceFlag} shell dumpsys cpuinfo | grep -i "${packageName}"`,
+        { timeout: 5000 }
+      );
+      if (cpuInfo.trim()) {
+        resultLines.push("💻 CPU:");
+        cpuInfo.split("\n").slice(0, 3).forEach(line => {
+          if (line.trim()) resultLines.push(`  ${line.trim()}`);
+        });
+      }
+    } catch {
+      resultLines.push("💻 CPU: N/A");
+    }
+
+    // Memory Usage
+    try {
+      const { stdout: memInfo } = await execAsync(
+        `adb ${deviceFlag} shell dumpsys meminfo ${packageName}`,
+        { maxBuffer: 2 * 1024 * 1024, timeout: 5000 }
+      );
+      const pssMatch = memInfo.match(/TOTAL PSS:\s*(\d+)/i) || memInfo.match(/TOTAL:\s+(\d+)/);
+      if (pssMatch) {
+        const pssMb = (parseInt(pssMatch[1]) / 1024).toFixed(1);
+        resultLines.push(`\n🧠 Memory: ${pssMb} MB (PSS)`);
+      }
+      const heapMatch = memInfo.match(/Java Heap:\s+(\d+)/);
+      const nativeMatch = memInfo.match(/Native Heap:\s+(\d+)/);
+      if (heapMatch) {
+        resultLines.push(`   Java Heap: ${(parseInt(heapMatch[1]) / 1024).toFixed(1)} MB`);
+      }
+      if (nativeMatch) {
+        resultLines.push(`   Native: ${(parseInt(nativeMatch[1]) / 1024).toFixed(1)} MB`);
+      }
+    } catch {
+      resultLines.push("\n🧠 Memory: App not running or no data");
+    }
+
+    // FPS Stats
+    try {
+      const { stdout: gfxInfo } = await execAsync(
+        `adb ${deviceFlag} shell dumpsys gfxinfo ${packageName}`,
+        { maxBuffer: 1024 * 1024, timeout: 5000 }
+      );
+      const totalMatch = gfxInfo.match(/Total frames rendered:\s*(\d+)/);
+      const jankyMatch = gfxInfo.match(/Janky frames:\s*(\d+)\s*\(([^)]+)\)/);
+      if (totalMatch) {
+        resultLines.push(`\n🎮 Frames: ${totalMatch[1]} rendered`);
+        if (jankyMatch) {
+          resultLines.push(`   Janky: ${jankyMatch[1]} (${jankyMatch[2]})`);
+        }
+      }
+    } catch {
+      resultLines.push("\n🎮 Frames: No data");
+    }
+
+    // Battery
+    try {
+      const { stdout: batteryInfo } = await execAsync(
+        `adb ${deviceFlag} shell dumpsys battery`,
+        { timeout: 3000 }
+      );
+      const levelMatch = batteryInfo.match(/level:\s*(\d+)/);
+      const tempMatch = batteryInfo.match(/temperature:\s*(\d+)/);
+      if (levelMatch) {
+        resultLines.push(`\n🔋 Battery: ${levelMatch[1]}%`);
+        if (tempMatch) {
+          resultLines.push(`   Temperature: ${parseInt(tempMatch[1]) / 10}°C`);
+        }
+      }
+    } catch {
+      resultLines.push("\n🔋 Battery: N/A");
+    }
+
+    // Network usage from app
+    try {
+      const { stdout: netStats } = await execAsync(
+        `adb ${deviceFlag} shell cat /proc/net/xt_qtaguid/stats`,
+        { timeout: 3000 }
+      );
+      // Just note that network is available
+      if (netStats.includes(packageName)) {
+        resultLines.push("\n📡 Network: Active");
+      }
+    } catch {
+      // Network stats not available
+    }
+
+    resultLines.push("\n" + "─".repeat(50));
+    resultLines.push("Use individual tools for detailed metrics:");
+    resultLines.push("  get_cpu_usage, get_memory_usage, get_fps_stats, get_battery_stats");
+
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error getting performance snapshot: ${error.message}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+// ============================================================================
 // MCP SERVER SETUP
 // ============================================================================
 
@@ -3141,6 +4147,77 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "analyze_request": {
         const result = await analyzeRequest(args?.index as number);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      // EXPO DEVTOOLS TOOLS
+      case "check_expo_status": {
+        const result = await checkExpoStatus(args?.port as number);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_expo_config": {
+        const result = await getExpoConfig(args?.projectPath as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "expo_dev_menu": {
+        const result = await expoDevMenu(args?.device as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "expo_reload": {
+        const result = await expoReload(args?.device as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_eas_builds": {
+        const result = await getEasBuilds(
+          args?.platform as string,
+          args?.limit as number
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      // PERFORMANCE METRICS TOOLS
+      case "get_cpu_usage": {
+        const result = await getCpuUsage(
+          args?.packageName as string,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_memory_usage": {
+        const result = await getMemoryUsage(
+          args?.packageName as string,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_fps_stats": {
+        const result = await getFpsStats(
+          args?.packageName as string,
+          args?.device as string,
+          args?.reset as boolean
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_battery_stats": {
+        const result = await getBatteryStats(
+          args?.packageName as string,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_performance_snapshot": {
+        const result = await getPerformanceSnapshot(
+          args?.packageName as string,
+          args?.device as string
+        );
         return { content: [{ type: "text", text: result }] };
       }
 

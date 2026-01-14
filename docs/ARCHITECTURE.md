@@ -74,7 +74,7 @@
 ┌───────────────────────────────────────────────────────────────────────────────────┐
 │  TRIAL (50 requests)  │  BASIC ($6/mo)          │  ADVANCED ($8/wk, $12/mo, $99/yr) │
 ├───────────────────────┼─────────────────────────┼───────────────────────────────────┤
-│  ✓ All 46 tools       │  ✓ 17 core tools        │  ✓ All 46 tools                   │
+│  ✓ All 56 tools       │  ✓ 17 core tools        │  ✓ All 56 tools                   │
 │  ✓ 50 log lines       │  ✓ 50 log lines         │  ✓ Unlimited log lines            │
 │  ✓ 1 device           │  ✓ 1 device             │  ✓ 3 devices                      │
 │  ✗ 50 requests limit  │  ✓ Unlimited requests   │  ✓ Unlimited requests             │
@@ -84,8 +84,9 @@
 │                       │  ✗ No iOS advanced      │  ✓ Error pattern watching         │
 │                       │  ✗ No React DevTools    │  ✓ Device interaction (Android)   │
 │                       │  ✗ No network inspect   │  ✓ iOS Simulator control          │
-│                       │                         │  ✓ React DevTools integration     │
+│                       │  ✗ No Expo DevTools     │  ✓ React DevTools integration     │
 │                       │                         │  ✓ Network request inspection     │
+│                       │                         │  ✓ Expo DevTools integration      │
 └───────────────────────┴─────────────────────────┴───────────────────────────────────┘
 ```
 
@@ -101,7 +102,7 @@ list_ios_simulators, screenshot_ios_simulator, get_ios_simulator_logs, get_ios_s
 **License (2):**
 get_license_status, set_license_key
 
-### Advanced Tools (29 - Advanced Tier Only):
+### Advanced Tools (39 - Advanced Tier Only):
 
 **Android Streaming & Monitoring (5):**
 stream_adb_realtime, stop_adb_streaming, screenshot_history, watch_for_errors, multi_device_logs
@@ -120,6 +121,12 @@ inspect_react_component, search_react_components
 **Network Inspection (5):**
 get_network_requests, start_network_monitoring, stop_network_monitoring,
 get_network_stats, analyze_request
+
+**Expo DevTools (5):**
+check_expo_status, get_expo_config, expo_dev_menu, expo_reload, get_eas_builds
+
+**Performance Metrics (5):**
+get_cpu_usage, get_memory_usage, get_fps_stats, get_battery_stats, get_performance_snapshot
 
 ### Why This Pricing:
 - **Basic $6/mo**: Low entry point for hobbyists, increased limits
@@ -264,10 +271,11 @@ Note: Tier is determined by checking `variant_name` for "basic" or "advanced" ke
 - [x] iOS Simulator support (12 tools: screenshots, logs, boot/shutdown, app management, push notifications, location)
 - [x] React DevTools integration (5 tools: setup, connection check, component tree, inspect, search)
 - [x] Network request inspection (5 tools: get requests, monitoring, stats, analyze)
+- [x] Expo DevTools integration (5 tools: server status, config, dev menu, reload, EAS builds)
+- [x] Performance metrics (5 tools: CPU, memory, FPS, battery, snapshot)
 
 ### Phase 4: Scale (Upcoming)
 - [ ] Team tier ($49/mo)
 - [ ] Usage analytics
 - [ ] Referral program
 - [ ] Enterprise outreach
-- [ ] Performance metrics
