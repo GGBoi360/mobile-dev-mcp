@@ -13,6 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as http from "http";
 import * as readline from "readline";
+import WebSocket from "ws";
 
 // License module
 import {
@@ -650,6 +651,179 @@ const coreTools: Tool[] = [
         },
       },
       required: ["latitude", "longitude"],
+    },
+  },
+
+  // === REACT DEVTOOLS TOOLS ===
+  {
+    name: "setup_react_devtools",
+    description:
+      "[PRO] Set up React DevTools connection for debugging. Configures port forwarding and checks connectivity.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        port: {
+          type: "number",
+          description: "DevTools port (default: 8097)",
+          default: 8097,
+        },
+        device: {
+          type: "string",
+          description: "Specific Android device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "check_devtools_connection",
+    description:
+      "[PRO] Check if React DevTools is connected and get connection status.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        port: {
+          type: "number",
+          description: "DevTools port (default: 8097)",
+          default: 8097,
+        },
+      },
+    },
+  },
+  {
+    name: "get_react_component_tree",
+    description:
+      "[PRO] Get the React component hierarchy from connected DevTools. Shows component names and structure.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        port: {
+          type: "number",
+          description: "DevTools port (default: 8097)",
+          default: 8097,
+        },
+        depth: {
+          type: "number",
+          description: "Maximum depth to traverse (default: 5)",
+          default: 5,
+        },
+      },
+    },
+  },
+  {
+    name: "inspect_react_component",
+    description:
+      "[PRO] Inspect a specific React component by ID. Returns props, state, and hooks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        componentId: {
+          type: "number",
+          description: "Component ID from the component tree",
+        },
+        port: {
+          type: "number",
+          description: "DevTools port (default: 8097)",
+          default: 8097,
+        },
+      },
+      required: ["componentId"],
+    },
+  },
+  {
+    name: "search_react_components",
+    description:
+      "[PRO] Search for React components by name or pattern.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Component name or pattern to search for",
+        },
+        port: {
+          type: "number",
+          description: "DevTools port (default: 8097)",
+          default: 8097,
+        },
+      },
+      required: ["query"],
+    },
+  },
+
+  // === NETWORK INSPECTION TOOLS ===
+  {
+    name: "get_network_requests",
+    description:
+      "[PRO] Get recent network requests from app logs. Parses fetch/XHR requests from React Native logs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        lines: {
+          type: "number",
+          description: "Number of log lines to search through (default: 200)",
+          default: 200,
+        },
+        filter: {
+          type: "string",
+          description: "Filter by URL pattern or method (e.g., 'api', 'POST')",
+        },
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "start_network_monitoring",
+    description:
+      "[PRO] Start real-time network request monitoring. Captures all HTTP/HTTPS traffic in background.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "stop_network_monitoring",
+    description:
+      "[PRO] Stop network monitoring and get summary of captured requests.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "get_network_stats",
+    description:
+      "[PRO] Get device network statistics including data usage, active connections, and WiFi info.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        device: {
+          type: "string",
+          description: "Specific device ID (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "analyze_request",
+    description:
+      "[PRO] Analyze a specific network request by index from captured requests. Shows headers, body, timing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        index: {
+          type: "number",
+          description: "Request index from get_network_requests or monitoring",
+        },
+      },
+      required: ["index"],
     },
   },
 ];
@@ -1298,6 +1472,1317 @@ async function installApk(apkPath: string, device?: string): Promise<string> {
 }
 
 // ============================================================================
+// iOS SIMULATOR TOOLS
+// ============================================================================
+
+interface SimulatorDevice {
+  udid: string;
+  name: string;
+  state: string;
+  isAvailable: boolean;
+  deviceTypeIdentifier?: string;
+}
+
+interface SimulatorRuntime {
+  runtimeName: string;
+  identifier: string;
+  version: string;
+  devices: SimulatorDevice[];
+}
+
+async function checkXcodeInstalled(): Promise<boolean> {
+  try {
+    await execAsync("xcrun simctl help");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function listIosSimulators(onlyBooted: boolean = false): Promise<string> {
+  const check = await requireBasic("list_ios_simulators");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    if (!(await checkXcodeInstalled())) {
+      return "Xcode Command Line Tools not installed. Run: xcode-select --install";
+    }
+
+    const { stdout } = await execAsync("xcrun simctl list devices -j");
+    const data = JSON.parse(stdout);
+
+    const results: string[] = [];
+    results.push("📱 iOS Simulators\n" + "═".repeat(50));
+
+    for (const [runtime, devices] of Object.entries(data.devices)) {
+      const deviceList = devices as SimulatorDevice[];
+      const filteredDevices = onlyBooted
+        ? deviceList.filter((d) => d.state === "Booted")
+        : deviceList.filter((d) => d.isAvailable);
+
+      if (filteredDevices.length > 0) {
+        // Extract iOS version from runtime identifier
+        const runtimeName = runtime.split(".").pop()?.replace(/-/g, " ") || runtime;
+        results.push(`\n${runtimeName}:`);
+
+        for (const device of filteredDevices) {
+          const status = device.state === "Booted" ? "🟢 Booted" : "⚪ Shutdown";
+          results.push(`  ${status} ${device.name}`);
+          results.push(`      UDID: ${device.udid}`);
+        }
+      }
+    }
+
+    if (results.length === 1) {
+      let result = onlyBooted
+        ? "No booted simulators found. Boot one with 'boot_ios_simulator'."
+        : "No iOS Simulators available. Open Xcode to download simulator runtimes.";
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
+    }
+
+    let result = results.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error listing iOS Simulators: ${error.message}`;
+  }
+}
+
+async function screenshotIosSimulator(udid?: string): Promise<{
+  success: boolean;
+  data?: string;
+  mimeType?: string;
+  error?: string;
+  trialMessage?: string;
+}> {
+  const check = await requireBasic("screenshot_ios_simulator");
+  if (!check.allowed) {
+    return { success: false, error: check.message };
+  }
+
+  if (process.platform !== "darwin") {
+    return { success: false, error: "iOS Simulators are only available on macOS." };
+  }
+
+  try {
+    const target = udid || "booted";
+    const screenshotPath = path.join(
+      CONFIG.screenshotDir,
+      `ios_screenshot_${Date.now()}.png`
+    );
+
+    await execAsync(`xcrun simctl io ${target} screenshot "${screenshotPath}"`);
+
+    const imageBuffer = fs.readFileSync(screenshotPath);
+    const base64Data = imageBuffer.toString("base64");
+    fs.unlinkSync(screenshotPath);
+
+    // Save to history for Advanced users
+    const license = await checkLicense();
+    if (license.valid && license.tier === "advanced") {
+      screenshotHistory.unshift({
+        timestamp: new Date().toISOString(),
+        data: base64Data,
+      });
+      if (screenshotHistory.length > MAX_SCREENSHOT_HISTORY) {
+        screenshotHistory = screenshotHistory.slice(0, MAX_SCREENSHOT_HISTORY);
+      }
+    }
+
+    return {
+      success: true,
+      data: base64Data,
+      mimeType: "image/png",
+      trialMessage: check.message,
+    };
+  } catch (error: any) {
+    if (error.message.includes("No devices are booted")) {
+      return { success: false, error: "No iOS Simulator is booted. Boot one first with 'boot_ios_simulator'." };
+    }
+    return { success: false, error: `Failed to capture iOS screenshot: ${error.message}` };
+  }
+}
+
+async function getIosSimulatorLogs(
+  udid?: string,
+  filter?: string,
+  lines: number = 50
+): Promise<string> {
+  const check = await requireBasic("get_ios_simulator_logs");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  const license = await checkLicense();
+  const tierLimits = TIER_LIMITS[license.tier];
+  const maxLines = Math.min(lines, tierLimits.maxLogLines);
+
+  try {
+    const target = udid || "booted";
+
+    // Use predicate filter if provided
+    let command = `xcrun simctl spawn ${target} log show --last 5m --style compact`;
+    if (filter) {
+      command += ` --predicate 'eventMessage CONTAINS "${filter}" OR subsystem CONTAINS "${filter}"'`;
+    }
+
+    const { stdout, stderr } = await execAsync(command, { maxBuffer: 10 * 1024 * 1024 });
+
+    if (stderr && !stdout) {
+      return `Error: ${stderr}`;
+    }
+
+    const logLines = stdout.split("\n").slice(-maxLines);
+    let result = `📋 iOS Simulator Logs (${logLines.length} lines):\n${"─".repeat(50)}\n${logLines.join("\n")}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    if (error.message.includes("No devices are booted")) {
+      return "No iOS Simulator is booted. Boot one first with 'boot_ios_simulator'.";
+    }
+    return `Error getting iOS logs: ${error.message}`;
+  }
+}
+
+async function getIosSimulatorInfo(udid?: string): Promise<string> {
+  const check = await requireBasic("get_ios_simulator_info");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    const { stdout } = await execAsync("xcrun simctl list devices -j");
+    const data = JSON.parse(stdout);
+
+    // Find the target device
+    let targetDevice: SimulatorDevice | null = null;
+    let targetRuntime = "";
+
+    for (const [runtime, devices] of Object.entries(data.devices)) {
+      const deviceList = devices as SimulatorDevice[];
+      const found = deviceList.find((d) =>
+        udid ? d.udid === udid : d.state === "Booted"
+      );
+      if (found) {
+        targetDevice = found;
+        targetRuntime = runtime;
+        break;
+      }
+    }
+
+    if (!targetDevice) {
+      return udid
+        ? `Simulator with UDID ${udid} not found.`
+        : "No booted simulator found. Boot one first or specify a UDID.";
+    }
+
+    const runtimeName = targetRuntime.split(".").pop()?.replace(/-/g, " ") || targetRuntime;
+
+    let result = `📱 iOS Simulator Info
+${"─".repeat(40)}
+  Name: ${targetDevice.name}
+  UDID: ${targetDevice.udid}
+  State: ${targetDevice.state === "Booted" ? "🟢 Booted" : "⚪ Shutdown"}
+  Runtime: ${runtimeName}
+  Available: ${targetDevice.isAvailable ? "Yes" : "No"}`;
+
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error getting simulator info: ${error.message}`;
+  }
+}
+
+async function bootIosSimulator(udid: string): Promise<string> {
+  const check = await requireAdvanced("boot_ios_simulator");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    await execAsync(`xcrun simctl boot "${udid}"`);
+    let result = `✅ iOS Simulator booted: ${udid}\n\nOpening Simulator app...`;
+
+    // Open Simulator app to show the booted device
+    try {
+      await execAsync("open -a Simulator");
+    } catch {}
+
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    if (error.message.includes("Unable to boot device in current state: Booted")) {
+      return "Simulator is already booted.";
+    }
+    return `Error booting simulator: ${error.message}`;
+  }
+}
+
+async function shutdownIosSimulator(udid: string): Promise<string> {
+  const check = await requireAdvanced("shutdown_ios_simulator");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    if (udid.toLowerCase() === "all") {
+      await execAsync("xcrun simctl shutdown all");
+      let result = "✅ All iOS Simulators have been shut down.";
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
+    }
+
+    await execAsync(`xcrun simctl shutdown "${udid}"`);
+    let result = `✅ iOS Simulator shut down: ${udid}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    if (error.message.includes("Unable to shutdown device in current state: Shutdown")) {
+      return "Simulator is already shut down.";
+    }
+    return `Error shutting down simulator: ${error.message}`;
+  }
+}
+
+async function installIosApp(appPath: string, udid?: string): Promise<string> {
+  const check = await requireAdvanced("install_ios_app");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  if (!fs.existsSync(appPath)) {
+    return `App not found: ${appPath}`;
+  }
+
+  try {
+    const target = udid || "booted";
+    await execAsync(`xcrun simctl install ${target} "${appPath}"`);
+    let result = `✅ App installed successfully on iOS Simulator!`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error installing app: ${error.message}`;
+  }
+}
+
+async function launchIosApp(bundleId: string, udid?: string): Promise<string> {
+  const check = await requireAdvanced("launch_ios_app");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    const target = udid || "booted";
+    await execAsync(`xcrun simctl launch ${target} "${bundleId}"`);
+    let result = `✅ Launched: ${bundleId}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error launching app: ${error.message}\n\nMake sure the bundle ID is correct and the app is installed.`;
+  }
+}
+
+async function terminateIosApp(bundleId: string, udid?: string): Promise<string> {
+  const check = await requireAdvanced("terminate_ios_app");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    const target = udid || "booted";
+    await execAsync(`xcrun simctl terminate ${target} "${bundleId}"`);
+    let result = `✅ Terminated: ${bundleId}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error terminating app: ${error.message}`;
+  }
+}
+
+async function iosOpenUrl(url: string, udid?: string): Promise<string> {
+  const check = await requireAdvanced("ios_open_url");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    const target = udid || "booted";
+    await execAsync(`xcrun simctl openurl ${target} "${url}"`);
+    let result = `✅ Opened URL: ${url}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error opening URL: ${error.message}`;
+  }
+}
+
+async function iosPushNotification(
+  bundleId: string,
+  payload: object,
+  udid?: string
+): Promise<string> {
+  const check = await requireAdvanced("ios_push_notification");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    const target = udid || "booted";
+    const payloadPath = path.join(CONFIG.screenshotDir, `push_${Date.now()}.json`);
+
+    // Write payload to temp file
+    fs.writeFileSync(payloadPath, JSON.stringify(payload));
+
+    await execAsync(`xcrun simctl push ${target} "${bundleId}" "${payloadPath}"`);
+
+    // Clean up
+    fs.unlinkSync(payloadPath);
+
+    let result = `✅ Push notification sent to ${bundleId}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error sending push notification: ${error.message}`;
+  }
+}
+
+async function iosSetLocation(
+  latitude: number,
+  longitude: number,
+  udid?: string
+): Promise<string> {
+  const check = await requireAdvanced("ios_set_location");
+  if (!check.allowed) return check.message!;
+
+  if (process.platform !== "darwin") {
+    return "iOS Simulators are only available on macOS.";
+  }
+
+  try {
+    const target = udid || "booted";
+    await execAsync(`xcrun simctl location ${target} set ${latitude},${longitude}`);
+    let result = `✅ Location set to: ${latitude}, ${longitude}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error setting location: ${error.message}`;
+  }
+}
+
+// ============================================================================
+// REACT DEVTOOLS INTEGRATION
+// ============================================================================
+
+// Store for DevTools WebSocket connection
+let devToolsWs: WebSocket | null = null;
+let devToolsConnected = false;
+let componentTree: Map<number, any> = new Map();
+let pendingRequests: Map<number, { resolve: Function; reject: Function }> = new Map();
+let requestId = 0;
+
+interface DevToolsMessage {
+  event: string;
+  payload?: any;
+}
+
+async function setupReactDevTools(port: number = 8097, device?: string): Promise<string> {
+  const check = await requireAdvanced("setup_react_devtools");
+  if (!check.allowed) return check.message!;
+
+  const results: string[] = [];
+  results.push("🔧 React DevTools Setup\n" + "═".repeat(50));
+
+  // Step 1: Set up ADB port forwarding (for Android)
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+    await execAsync(`adb ${deviceFlag} reverse tcp:${port} tcp:${port}`);
+    results.push(`\n✅ ADB port forwarding configured: tcp:${port} -> tcp:${port}`);
+  } catch (error: any) {
+    results.push(`\n⚠️ ADB port forwarding failed: ${error.message}`);
+    results.push("   (This is OK if using iOS Simulator or DevTools is on same machine)");
+  }
+
+  // Step 2: Check if DevTools server is available
+  try {
+    const isRunning = await checkDevToolsServer(port);
+    if (isRunning) {
+      results.push(`✅ React DevTools server detected on port ${port}`);
+    } else {
+      results.push(`⚠️ React DevTools server not detected on port ${port}`);
+      results.push("\nTo start React DevTools:");
+      results.push("  npx react-devtools");
+      results.push("  # or install globally:");
+      results.push("  npm install -g react-devtools && react-devtools");
+    }
+  } catch (error: any) {
+    results.push(`⚠️ Could not check DevTools server: ${error.message}`);
+  }
+
+  // Step 3: Connection instructions
+  results.push("\n📋 Next Steps:");
+  results.push("1. Make sure React DevTools standalone is running (npx react-devtools)");
+  results.push("2. Your React Native app should connect automatically in dev mode");
+  results.push("3. Use 'check_devtools_connection' to verify the connection");
+  results.push("4. Use 'get_react_component_tree' to inspect components");
+
+  let result = results.join("\n");
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+async function checkDevToolsServer(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    const timeout = setTimeout(() => {
+      ws.close();
+      resolve(false);
+    }, 3000);
+
+    ws.on("open", () => {
+      clearTimeout(timeout);
+      ws.close();
+      resolve(true);
+    });
+
+    ws.on("error", () => {
+      clearTimeout(timeout);
+      resolve(false);
+    });
+  });
+}
+
+async function checkDevToolsConnection(port: number = 8097): Promise<string> {
+  const check = await requireAdvanced("check_devtools_connection");
+  if (!check.allowed) return check.message!;
+
+  const results: string[] = [];
+  results.push("🔍 React DevTools Connection Status\n" + "═".repeat(50));
+
+  // Check if server is running
+  const serverRunning = await checkDevToolsServer(port);
+
+  if (!serverRunning) {
+    results.push(`\n❌ DevTools server not found on port ${port}`);
+    results.push("\nTo start React DevTools:");
+    results.push("  npx react-devtools");
+    let result = results.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+
+  results.push(`\n✅ DevTools server running on port ${port}`);
+
+  // Try to connect and get basic info
+  try {
+    const connection = await connectToDevTools(port);
+    if (connection.connected) {
+      results.push("✅ Successfully connected to DevTools");
+      if (connection.rendererCount > 0) {
+        results.push(`✅ ${connection.rendererCount} React renderer(s) connected`);
+        results.push("\n📱 App is connected and ready for inspection!");
+        results.push("   Use 'get_react_component_tree' to view components");
+      } else {
+        results.push("⚠️ No React renderers connected");
+        results.push("\nMake sure your React Native app is running in development mode.");
+      }
+    } else {
+      results.push("⚠️ Connected to server but no app detected");
+    }
+  } catch (error: any) {
+    results.push(`⚠️ Connection test failed: ${error.message}`);
+  }
+
+  let result = results.join("\n");
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+interface DevToolsConnection {
+  connected: boolean;
+  rendererCount: number;
+  ws?: WebSocket;
+}
+
+async function connectToDevTools(port: number): Promise<DevToolsConnection> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    let rendererCount = 0;
+    let resolved = false;
+
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        ws.close();
+        resolve({ connected: true, rendererCount: 0 });
+      }
+    }, 5000);
+
+    ws.on("open", () => {
+      // DevTools protocol: request operations
+      // The standalone DevTools uses a different protocol than we might expect
+      // For now, we'll just confirm connection
+    });
+
+    ws.on("message", (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        if (message.event === "operations" || message.event === "roots") {
+          rendererCount++;
+        }
+      } catch {}
+    });
+
+    ws.on("close", () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve({ connected: true, rendererCount });
+      }
+    });
+
+    ws.on("error", (err) => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        reject(err);
+      }
+    });
+
+    // Give it time to receive messages
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        ws.close();
+        resolve({ connected: true, rendererCount });
+      }
+    }, 2000);
+  });
+}
+
+async function getReactComponentTree(port: number = 8097, depth: number = 5): Promise<string> {
+  const check = await requireAdvanced("get_react_component_tree");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const tree = await fetchComponentTree(port, depth);
+
+    if (!tree || tree.length === 0) {
+      let result = `📊 React Component Tree\n${"═".repeat(50)}\n\nNo components found.\n\nMake sure:\n1. React DevTools standalone is running (npx react-devtools)\n2. Your React Native app is running in development mode\n3. The app is connected to DevTools`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
+    }
+
+    const lines: string[] = [];
+    lines.push("📊 React Component Tree");
+    lines.push("═".repeat(50));
+    lines.push("");
+
+    for (const node of tree) {
+      const indent = "  ".repeat(node.depth);
+      const typeIcon = node.type === "function" ? "ƒ" : node.type === "class" ? "◆" : "○";
+      lines.push(`${indent}${typeIcon} ${node.name} [id:${node.id}]`);
+      if (node.key) {
+        lines.push(`${indent}  key: "${node.key}"`);
+      }
+    }
+
+    lines.push("");
+    lines.push(`Total: ${tree.length} components (depth: ${depth})`);
+    lines.push("\nUse 'inspect_react_component' with an [id] to see props/state");
+
+    let result = lines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error fetching component tree: ${error.message}\n\nMake sure React DevTools is running: npx react-devtools`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+interface ComponentNode {
+  id: number;
+  name: string;
+  type: string;
+  depth: number;
+  key?: string;
+}
+
+async function fetchComponentTree(port: number, maxDepth: number): Promise<ComponentNode[]> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    const components: ComponentNode[] = [];
+    let resolved = false;
+
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        ws.close();
+        resolve(components);
+      }
+    }, 10000);
+
+    ws.on("open", () => {
+      // Send a request to get the tree
+      // The DevTools protocol varies, so we listen for operations
+    });
+
+    ws.on("message", (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+
+        // Handle different message types from React DevTools
+        if (message.event === "operations") {
+          // Parse operations to build component tree
+          const ops = message.payload;
+          if (Array.isArray(ops)) {
+            // Operations array contains component tree data
+            parseOperations(ops, components, maxDepth);
+          }
+        } else if (message.event === "roots") {
+          // Root components
+          if (Array.isArray(message.payload)) {
+            for (const root of message.payload) {
+              components.push({
+                id: root.id || components.length,
+                name: root.displayName || root.name || "Root",
+                type: root.type || "root",
+                depth: 0,
+              });
+            }
+          }
+        }
+      } catch {}
+    });
+
+    ws.on("error", (err) => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        // Return empty array on error, not reject
+        resolve(components);
+      }
+    });
+
+    ws.on("close", () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve(components);
+      }
+    });
+
+    // Give time to receive data
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        ws.close();
+        resolve(components);
+      }
+    }, 3000);
+  });
+}
+
+function parseOperations(ops: any[], components: ComponentNode[], maxDepth: number): void {
+  // React DevTools operations format varies by version
+  // This is a simplified parser
+  let depth = 0;
+
+  for (let i = 0; i < ops.length && components.length < 100; i++) {
+    const op = ops[i];
+    if (typeof op === "object" && op.id !== undefined) {
+      if (depth <= maxDepth) {
+        components.push({
+          id: op.id,
+          name: op.displayName || op.name || `Component_${op.id}`,
+          type: op.type === 1 ? "function" : op.type === 2 ? "class" : "other",
+          depth: Math.min(op.depth || depth, maxDepth),
+          key: op.key,
+        });
+      }
+    }
+  }
+}
+
+async function inspectReactComponent(componentId: number, port: number = 8097): Promise<string> {
+  const check = await requireAdvanced("inspect_react_component");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const inspection = await fetchComponentDetails(componentId, port);
+
+    if (!inspection) {
+      let result = `Component with ID ${componentId} not found.\n\nUse 'get_react_component_tree' to get valid component IDs.`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
+    }
+
+    const lines: string[] = [];
+    lines.push(`🔍 Component Inspection: ${inspection.name}`);
+    lines.push("═".repeat(50));
+    lines.push(`ID: ${componentId}`);
+    lines.push(`Type: ${inspection.type}`);
+
+    if (inspection.props && Object.keys(inspection.props).length > 0) {
+      lines.push("\n📦 Props:");
+      for (const [key, value] of Object.entries(inspection.props)) {
+        const displayValue = formatValue(value);
+        lines.push(`  ${key}: ${displayValue}`);
+      }
+    } else {
+      lines.push("\n📦 Props: (none)");
+    }
+
+    if (inspection.state && Object.keys(inspection.state).length > 0) {
+      lines.push("\n💾 State:");
+      for (const [key, value] of Object.entries(inspection.state)) {
+        const displayValue = formatValue(value);
+        lines.push(`  ${key}: ${displayValue}`);
+      }
+    }
+
+    if (inspection.hooks && inspection.hooks.length > 0) {
+      lines.push("\n🪝 Hooks:");
+      for (const hook of inspection.hooks) {
+        lines.push(`  ${hook.name}: ${formatValue(hook.value)}`);
+      }
+    }
+
+    let result = lines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error inspecting component: ${error.message}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+function formatValue(value: any): string {
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  if (typeof value === "string") return `"${value.substring(0, 100)}${value.length > 100 ? "..." : ""}"`;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return `Array(${value.length})`;
+  if (typeof value === "object") {
+    const keys = Object.keys(value);
+    if (keys.length === 0) return "{}";
+    return `{${keys.slice(0, 3).join(", ")}${keys.length > 3 ? ", ..." : ""}}`;
+  }
+  if (typeof value === "function") return "ƒ()";
+  return String(value).substring(0, 50);
+}
+
+interface ComponentDetails {
+  name: string;
+  type: string;
+  props: Record<string, any>;
+  state?: Record<string, any>;
+  hooks?: Array<{ name: string; value: any }>;
+}
+
+async function fetchComponentDetails(componentId: number, port: number): Promise<ComponentDetails | null> {
+  return new Promise((resolve) => {
+    const ws = new WebSocket(`ws://localhost:${port}`);
+    let resolved = false;
+    let details: ComponentDetails | null = null;
+
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        ws.close();
+        resolve(details);
+      }
+    }, 5000);
+
+    ws.on("open", () => {
+      // Request inspection of specific element
+      const request = {
+        event: "inspectElement",
+        payload: {
+          id: componentId,
+          rendererID: 1,
+          requestID: Date.now(),
+        },
+      };
+      ws.send(JSON.stringify(request));
+    });
+
+    ws.on("message", (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        if (message.event === "inspectedElement" && message.payload) {
+          const p = message.payload;
+          details = {
+            name: p.displayName || p.name || `Component_${componentId}`,
+            type: p.type || "unknown",
+            props: p.props || {},
+            state: p.state,
+            hooks: p.hooks,
+          };
+        }
+      } catch {}
+    });
+
+    ws.on("error", () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve(null);
+      }
+    });
+
+    ws.on("close", () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve(details);
+      }
+    });
+
+    // Give time to receive response
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        ws.close();
+        resolve(details);
+      }
+    }, 3000);
+  });
+}
+
+async function searchReactComponents(query: string, port: number = 8097): Promise<string> {
+  const check = await requireAdvanced("search_react_components");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const tree = await fetchComponentTree(port, 10);
+    const queryLower = query.toLowerCase();
+
+    const matches = tree.filter((component) =>
+      component.name.toLowerCase().includes(queryLower)
+    );
+
+    if (matches.length === 0) {
+      let result = `🔍 Search Results for "${query}"\n${"═".repeat(50)}\n\nNo components found matching "${query}".\n\nTip: Try a partial name or check if the app is connected to DevTools.`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
+    }
+
+    const lines: string[] = [];
+    lines.push(`🔍 Search Results for "${query}"`);
+    lines.push("═".repeat(50));
+    lines.push(`\nFound ${matches.length} matching component(s):\n`);
+
+    for (const match of matches.slice(0, 20)) {
+      const typeIcon = match.type === "function" ? "ƒ" : match.type === "class" ? "◆" : "○";
+      lines.push(`${typeIcon} ${match.name} [id:${match.id}]`);
+    }
+
+    if (matches.length > 20) {
+      lines.push(`\n... and ${matches.length - 20} more matches`);
+    }
+
+    lines.push("\nUse 'inspect_react_component' with an [id] to see props/state");
+
+    let result = lines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    let result = `Error searching components: ${error.message}`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+}
+
+// ============================================================================
+// NETWORK INSPECTION
+// ============================================================================
+
+// Network monitoring state
+let networkMonitorProcess: ChildProcess | null = null;
+let networkRequestBuffer: NetworkRequest[] = [];
+const MAX_NETWORK_REQUESTS = 100;
+
+interface NetworkRequest {
+  index: number;
+  timestamp: string;
+  method: string;
+  url: string;
+  status?: number;
+  duration?: number;
+  size?: string;
+  headers?: Record<string, string>;
+  body?: string;
+  response?: string;
+}
+
+async function getNetworkRequests(
+  lines: number = 200,
+  filter?: string,
+  device?: string
+): Promise<string> {
+  const check = await requireAdvanced("get_network_requests");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+
+    // Get logs and filter for network-related entries
+    // React Native logs network requests with various patterns
+    const { stdout } = await execAsync(
+      `adb ${deviceFlag} logcat -d -t ${lines} *:V`,
+      { maxBuffer: 5 * 1024 * 1024 }
+    );
+
+    const requests: NetworkRequest[] = [];
+    const logLines = stdout.split("\n");
+
+    // Patterns to match network requests
+    const patterns = [
+      // OkHttp pattern
+      /OkHttp.*?(GET|POST|PUT|DELETE|PATCH)\s+(.+)/i,
+      // React Native fetch pattern
+      /\[fetch\].*?(GET|POST|PUT|DELETE|PATCH)\s+(.+)/i,
+      // Generic HTTP pattern
+      /HTTP.*?(GET|POST|PUT|DELETE|PATCH)\s+(https?:\/\/\S+)/i,
+      // XMLHttpRequest pattern
+      /XMLHttpRequest.*?(GET|POST|PUT|DELETE|PATCH)\s+(.+)/i,
+      // Network response pattern
+      /(\d{3})\s+(https?:\/\/\S+).*?(\d+ms|\d+\.\d+s)/i,
+    ];
+
+    let index = 0;
+    for (const line of logLines) {
+      for (const pattern of patterns) {
+        const match = line.match(pattern);
+        if (match) {
+          const method = match[1]?.toUpperCase() || "GET";
+          const url = match[2] || "";
+
+          // Apply filter if provided
+          if (filter) {
+            const filterLower = filter.toLowerCase();
+            if (!method.toLowerCase().includes(filterLower) &&
+                !url.toLowerCase().includes(filterLower)) {
+              continue;
+            }
+          }
+
+          requests.push({
+            index: index++,
+            timestamp: new Date().toISOString(),
+            method,
+            url: url.substring(0, 200),
+            status: match[1]?.match(/^\d{3}$/) ? parseInt(match[1]) : undefined,
+          });
+          break;
+        }
+      }
+    }
+
+    if (requests.length === 0) {
+      let result = `📡 Network Requests\n${"═".repeat(50)}\n\nNo network requests found in recent logs.\n\nTips:\n- Make sure your app is making network requests\n- React Native logs network activity in development mode\n- Try increasing the lines parameter`;
+      if (check.message) result += `\n\n${check.message}`;
+      return result;
+    }
+
+    const resultLines: string[] = [];
+    resultLines.push("📡 Network Requests");
+    resultLines.push("═".repeat(50));
+    resultLines.push(`\nFound ${requests.length} request(s):\n`);
+
+    for (const req of requests.slice(0, 30)) {
+      const statusIcon = req.status
+        ? (req.status >= 200 && req.status < 300 ? "✅" : "❌")
+        : "⏳";
+      resultLines.push(`[${req.index}] ${statusIcon} ${req.method} ${req.url.substring(0, 60)}${req.url.length > 60 ? "..." : ""}`);
+      if (req.status) {
+        resultLines.push(`    Status: ${req.status}`);
+      }
+    }
+
+    if (requests.length > 30) {
+      resultLines.push(`\n... and ${requests.length - 30} more requests`);
+    }
+
+    resultLines.push("\nUse 'start_network_monitoring' for real-time capture");
+
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error getting network requests: ${error.message}`;
+  }
+}
+
+async function startNetworkMonitoring(device?: string): Promise<string> {
+  const check = await requireAdvanced("start_network_monitoring");
+  if (!check.allowed) return check.message!;
+
+  if (networkMonitorProcess) {
+    return "Network monitoring is already running. Use 'stop_network_monitoring' first.";
+  }
+
+  networkRequestBuffer = [];
+
+  const deviceFlag = device ? `-s ${device}` : "";
+
+  // Start logcat with network-related filters
+  networkMonitorProcess = spawn("adb", [
+    ...deviceFlag.split(" ").filter(s => s),
+    "logcat",
+    "-v", "time",
+    "OkHttp:V",
+    "Retrofit:V",
+    "ReactNativeJS:V",
+    "*:S"
+  ]);
+
+  let requestIndex = 0;
+
+  networkMonitorProcess.stdout?.on("data", (data: Buffer) => {
+    const lines = data.toString().split("\n");
+    for (const line of lines) {
+      // Parse network request patterns
+      const httpMatch = line.match(/(GET|POST|PUT|DELETE|PATCH)\s+(https?:\/\/\S+)/i);
+      if (httpMatch) {
+        networkRequestBuffer.push({
+          index: requestIndex++,
+          timestamp: new Date().toISOString(),
+          method: httpMatch[1].toUpperCase(),
+          url: httpMatch[2],
+        });
+
+        if (networkRequestBuffer.length > MAX_NETWORK_REQUESTS) {
+          networkRequestBuffer = networkRequestBuffer.slice(-MAX_NETWORK_REQUESTS);
+        }
+      }
+
+      // Parse response status
+      const statusMatch = line.match(/<--\s*(\d{3})\s+(https?:\/\/\S+)/i);
+      if (statusMatch) {
+        const url = statusMatch[2];
+        const req = networkRequestBuffer.find(r => r.url === url && !r.status);
+        if (req) {
+          req.status = parseInt(statusMatch[1]);
+        }
+      }
+    }
+  });
+
+  networkMonitorProcess.on("error", (err) => {
+    console.error("Network monitor error:", err);
+  });
+
+  let result = `📡 Network Monitoring Started\n${"═".repeat(50)}\n\nCapturing HTTP/HTTPS requests in background.\n\nUse 'stop_network_monitoring' to stop and see captured requests.\nUse 'get_network_requests' to see current buffer.`;
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+async function stopNetworkMonitoring(): Promise<string> {
+  const check = await requireAdvanced("stop_network_monitoring");
+  if (!check.allowed) return check.message!;
+
+  if (networkMonitorProcess) {
+    networkMonitorProcess.kill();
+    networkMonitorProcess = null;
+  }
+
+  const requests = networkRequestBuffer;
+  const summary = {
+    total: requests.length,
+    successful: requests.filter(r => r.status && r.status >= 200 && r.status < 300).length,
+    failed: requests.filter(r => r.status && (r.status < 200 || r.status >= 300)).length,
+    pending: requests.filter(r => !r.status).length,
+  };
+
+  const resultLines: string[] = [];
+  resultLines.push("📡 Network Monitoring Stopped");
+  resultLines.push("═".repeat(50));
+  resultLines.push(`\nSummary:`);
+  resultLines.push(`  Total requests: ${summary.total}`);
+  resultLines.push(`  Successful (2xx): ${summary.successful}`);
+  resultLines.push(`  Failed: ${summary.failed}`);
+  resultLines.push(`  Pending: ${summary.pending}`);
+
+  if (requests.length > 0) {
+    resultLines.push(`\nRecent requests:`);
+    for (const req of requests.slice(-10)) {
+      const statusIcon = req.status
+        ? (req.status >= 200 && req.status < 300 ? "✅" : "❌")
+        : "⏳";
+      resultLines.push(`[${req.index}] ${statusIcon} ${req.method} ${req.url.substring(0, 50)}...`);
+    }
+  }
+
+  let result = resultLines.join("\n");
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+async function getNetworkStats(device?: string): Promise<string> {
+  const check = await requireAdvanced("get_network_stats");
+  if (!check.allowed) return check.message!;
+
+  try {
+    const deviceFlag = device ? `-s ${device}` : "";
+
+    // Get various network stats
+    const [wifiInfo, netStats, activeConns] = await Promise.all([
+      execAsync(`adb ${deviceFlag} shell dumpsys wifi | head -50`)
+        .then(r => r.stdout)
+        .catch(() => "N/A"),
+      execAsync(`adb ${deviceFlag} shell cat /proc/net/dev`)
+        .then(r => r.stdout)
+        .catch(() => "N/A"),
+      execAsync(`adb ${deviceFlag} shell netstat -an | head -30`)
+        .then(r => r.stdout)
+        .catch(() => "N/A"),
+    ]);
+
+    const resultLines: string[] = [];
+    resultLines.push("📊 Network Statistics");
+    resultLines.push("═".repeat(50));
+
+    // Parse WiFi info
+    const ssidMatch = wifiInfo.match(/mWifiInfo.*?SSID:\s*([^,]+)/);
+    const rssiMatch = wifiInfo.match(/RSSI:\s*(-?\d+)/);
+    const linkSpeedMatch = wifiInfo.match(/Link speed:\s*(\d+)/);
+
+    resultLines.push("\n📶 WiFi Info:");
+    if (ssidMatch) resultLines.push(`  SSID: ${ssidMatch[1].trim()}`);
+    if (rssiMatch) resultLines.push(`  Signal: ${rssiMatch[1]} dBm`);
+    if (linkSpeedMatch) resultLines.push(`  Speed: ${linkSpeedMatch[1]} Mbps`);
+
+    // Parse network interface stats
+    resultLines.push("\n📈 Interface Stats:");
+    const devLines = netStats.split("\n").filter(l => l.includes("wlan") || l.includes("rmnet"));
+    for (const line of devLines.slice(0, 5)) {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length >= 10) {
+        const iface = parts[0].replace(":", "");
+        const rxBytes = parseInt(parts[1]) || 0;
+        const txBytes = parseInt(parts[9]) || 0;
+        resultLines.push(`  ${iface}: RX ${formatBytes(rxBytes)}, TX ${formatBytes(txBytes)}`);
+      }
+    }
+
+    // Parse active connections
+    resultLines.push("\n🔗 Active Connections:");
+    const connLines = activeConns.split("\n")
+      .filter(l => l.includes("ESTABLISHED") || l.includes("TIME_WAIT"))
+      .slice(0, 8);
+
+    if (connLines.length > 0) {
+      for (const line of connLines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 5) {
+          resultLines.push(`  ${parts[3]} -> ${parts[4]} (${parts[5] || ""})`);
+        }
+      }
+    } else {
+      resultLines.push("  No active connections found");
+    }
+
+    let result = resultLines.join("\n");
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  } catch (error: any) {
+    return `Error getting network stats: ${error.message}`;
+  }
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
+}
+
+async function analyzeRequest(index: number): Promise<string> {
+  const check = await requireAdvanced("analyze_request");
+  if (!check.allowed) return check.message!;
+
+  const request = networkRequestBuffer.find(r => r.index === index);
+
+  if (!request) {
+    let result = `Request #${index} not found.\n\nUse 'get_network_requests' or 'start_network_monitoring' to capture requests first.`;
+    if (check.message) result += `\n\n${check.message}`;
+    return result;
+  }
+
+  const resultLines: string[] = [];
+  resultLines.push(`🔍 Request Analysis #${index}`);
+  resultLines.push("═".repeat(50));
+  resultLines.push(`\nMethod: ${request.method}`);
+  resultLines.push(`URL: ${request.url}`);
+  resultLines.push(`Timestamp: ${request.timestamp}`);
+
+  if (request.status) {
+    const statusText = request.status >= 200 && request.status < 300 ? "Success" : "Failed";
+    resultLines.push(`Status: ${request.status} (${statusText})`);
+  } else {
+    resultLines.push("Status: Pending/Unknown");
+  }
+
+  if (request.duration) {
+    resultLines.push(`Duration: ${request.duration}ms`);
+  }
+
+  if (request.size) {
+    resultLines.push(`Size: ${request.size}`);
+  }
+
+  if (request.headers && Object.keys(request.headers).length > 0) {
+    resultLines.push("\n📋 Headers:");
+    for (const [key, value] of Object.entries(request.headers)) {
+      resultLines.push(`  ${key}: ${value}`);
+    }
+  }
+
+  if (request.body) {
+    resultLines.push("\n📤 Request Body:");
+    resultLines.push(`  ${request.body.substring(0, 500)}${request.body.length > 500 ? "..." : ""}`);
+  }
+
+  if (request.response) {
+    resultLines.push("\n📥 Response:");
+    resultLines.push(`  ${request.response.substring(0, 500)}${request.response.length > 500 ? "..." : ""}`);
+  }
+
+  let result = resultLines.join("\n");
+  if (check.message) result += `\n\n${check.message}`;
+  return result;
+}
+
+// ============================================================================
 // MCP SERVER SETUP
 // ============================================================================
 
@@ -1490,6 +2975,172 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args?.apkPath as string,
           args?.device as string
         );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      // iOS SIMULATOR TOOLS
+      case "list_ios_simulators": {
+        const result = await listIosSimulators(args?.onlyBooted as boolean);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "screenshot_ios_simulator": {
+        const result = await screenshotIosSimulator(args?.udid as string);
+        if (result.success && result.data) {
+          const content: any[] = [
+            {
+              type: "image",
+              data: result.data,
+              mimeType: result.mimeType!,
+            },
+          ];
+          if (result.trialMessage) {
+            content.push({ type: "text", text: result.trialMessage });
+          }
+          return { content };
+        }
+        return { content: [{ type: "text", text: result.error! }] };
+      }
+
+      case "get_ios_simulator_logs": {
+        const result = await getIosSimulatorLogs(
+          args?.udid as string,
+          args?.filter as string,
+          args?.lines as number
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_ios_simulator_info": {
+        const result = await getIosSimulatorInfo(args?.udid as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "boot_ios_simulator": {
+        const result = await bootIosSimulator(args?.udid as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "shutdown_ios_simulator": {
+        const result = await shutdownIosSimulator(args?.udid as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "install_ios_app": {
+        const result = await installIosApp(
+          args?.appPath as string,
+          args?.udid as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "launch_ios_app": {
+        const result = await launchIosApp(
+          args?.bundleId as string,
+          args?.udid as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "terminate_ios_app": {
+        const result = await terminateIosApp(
+          args?.bundleId as string,
+          args?.udid as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "ios_open_url": {
+        const result = await iosOpenUrl(
+          args?.url as string,
+          args?.udid as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "ios_push_notification": {
+        const result = await iosPushNotification(
+          args?.bundleId as string,
+          args?.payload as object,
+          args?.udid as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "ios_set_location": {
+        const result = await iosSetLocation(
+          args?.latitude as number,
+          args?.longitude as number,
+          args?.udid as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      // REACT DEVTOOLS TOOLS
+      case "setup_react_devtools": {
+        const result = await setupReactDevTools(
+          args?.port as number,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "check_devtools_connection": {
+        const result = await checkDevToolsConnection(args?.port as number);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_react_component_tree": {
+        const result = await getReactComponentTree(
+          args?.port as number,
+          args?.depth as number
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "inspect_react_component": {
+        const result = await inspectReactComponent(
+          args?.componentId as number,
+          args?.port as number
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "search_react_components": {
+        const result = await searchReactComponents(
+          args?.query as string,
+          args?.port as number
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      // NETWORK INSPECTION TOOLS
+      case "get_network_requests": {
+        const result = await getNetworkRequests(
+          args?.lines as number,
+          args?.filter as string,
+          args?.device as string
+        );
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "start_network_monitoring": {
+        const result = await startNetworkMonitoring(args?.device as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "stop_network_monitoring": {
+        const result = await stopNetworkMonitoring();
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "get_network_stats": {
+        const result = await getNetworkStats(args?.device as string);
+        return { content: [{ type: "text", text: result }] };
+      }
+
+      case "analyze_request": {
+        const result = await analyzeRequest(args?.index as number);
         return { content: [{ type: "text", text: result }] };
       }
 

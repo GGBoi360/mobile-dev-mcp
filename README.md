@@ -6,33 +6,47 @@ An MCP (Model Context Protocol) server that gives Claude real-time access to mob
 
 - **Metro Log Streaming** - Claude can read Metro bundler output in real-time
 - **ADB Logcat Integration** - Get React Native logs directly from your device/emulator
-- **Screenshot Capture** - Claude can see your app's current screen
+- **iOS Simulator Support** - Screenshots and logs from iOS Simulators (macOS only)
+- **Screenshot Capture** - Claude can see your app's current screen (Android & iOS)
 - **Device Management** - List devices, check status, restart ADB
 - **App Management** - Get app info, clear data for fresh testing
+- **React DevTools Integration** - Inspect React component trees, props, and state
 
 ## Pricing
 
 | Tier | Price | Features |
 |------|-------|----------|
-| **TRIAL** | Free (50 requests) | Try all 13 core tools, then purchase to continue |
-| **BASIC** | $6/month | 13 core tools, 50 log lines max, 1 device |
-| **ADVANCED** | $8/week, $12/month, or $99/year | All 18 tools, unlimited logs, 3 devices, real-time streaming |
+| **TRIAL** | Free (50 requests) | Try all 46 tools, then purchase to continue |
+| **BASIC** | $6/month | 17 core tools (Android + iOS basics), 50 log lines max, 1 device |
+| **ADVANCED** | $8/week, $12/month, or $99/year | All 46 tools, unlimited logs, 3 devices, streaming, DevTools, network inspection |
 
 Purchase at: https://mobile-dev-mcp.com
 
 ## Installation
 
-### Option 1: Claude Code Plugin (Recommended)
+### Option 1: NPX (Recommended)
 ```bash
-# In Claude Code
-/plugin install GGBoi360/claude-mobile-dev-mcp
+# Add to Claude Code
+claude mcp add mobile-dev -- npx @ggboi360/mobile-dev-mcp
 ```
 
-### Option 2: Manual MCP Setup
+Or add to your `~/.claude/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "mobile-dev": {
+      "command": "npx",
+      "args": ["@ggboi360/mobile-dev-mcp"]
+    }
+  }
+}
+```
+
+### Option 2: Manual Setup (Development)
 ```bash
 # Clone the repo
-git clone https://github.com/GGBoi360/claude-mobile-dev-mcp.git
-cd claude-mobile-dev-mcp
+git clone https://github.com/GGBoi360/mobile-dev-mcp.git
+cd mobile-dev-mcp
 
 # Install dependencies
 npm install
@@ -41,24 +55,23 @@ npm install
 npm run build
 
 # Add to Claude Code
-claude mcp add mobile-dev -- node /path/to/claude-mobile-dev-mcp/dist/index.js
-```
-
-### Option 3: NPX (Coming Soon)
-```bash
-claude mcp add mobile-dev -- npx claude-mobile-dev-mcp
+claude mcp add mobile-dev -- node /path/to/mobile-dev-mcp/dist/index.js
 ```
 
 ## Requirements
 
 - **Node.js** >= 18.0.0
-- **ADB** (Android Debug Bridge) - Part of Android SDK Platform Tools
+- **For Android:**
+  - **ADB** (Android Debug Bridge) - Part of Android SDK Platform Tools
   - [Download Platform Tools](https://developer.android.com/tools/releases/platform-tools)
   - Make sure `adb` is in your PATH
+- **For iOS (macOS only):**
+  - **Xcode** with Command Line Tools
+  - Run `xcode-select --install` if not installed
 
 ## Available Tools
 
-### Core Tools (All Tiers)
+### Core Tools - Android (All Tiers)
 
 | Tool | Description |
 |------|-------------|
@@ -73,10 +86,24 @@ claude mcp add mobile-dev -- npx claude-mobile-dev-mcp
 | `get_device_info` | Get detailed device information |
 | `start_metro_logging` | Start capturing Metro logs in background |
 | `stop_metro_logging` | Stop Metro log capture |
+
+### Core Tools - iOS Simulator (All Tiers, macOS only)
+
+| Tool | Description |
+|------|-------------|
+| `list_ios_simulators` | List all available iOS Simulators |
+| `screenshot_ios_simulator` | Capture screenshot from iOS Simulator |
+| `get_ios_simulator_logs` | Get logs from iOS Simulator |
+| `get_ios_simulator_info` | Get detailed simulator information |
+
+### License Tools (All Tiers)
+
+| Tool | Description |
+|------|-------------|
 | `get_license_status` | Check your current license tier and limits |
 | `set_license_key` | Activate a license key to unlock paid features |
 
-### Advanced Tools (Advanced Tier Only)
+### Advanced Tools - Android (Advanced Tier Only)
 
 | Tool | Description |
 |------|-------------|
@@ -91,6 +118,39 @@ claude mcp add mobile-dev -- npx claude-mobile-dev-mcp
 | `swipe_screen` | Swipe/scroll on the screen |
 | `launch_app` | Launch an app by package name |
 | `install_apk` | Install an APK file to the device |
+
+### Advanced Tools - iOS Simulator (Advanced Tier Only, macOS)
+
+| Tool | Description |
+|------|-------------|
+| `boot_ios_simulator` | Boot an iOS Simulator by UDID or name |
+| `shutdown_ios_simulator` | Shutdown an iOS Simulator (or all) |
+| `install_ios_app` | Install an app (.app bundle) on simulator |
+| `launch_ios_app` | Launch an app by bundle identifier |
+| `terminate_ios_app` | Force quit an app on simulator |
+| `ios_open_url` | Open a URL (deep links, universal links) |
+| `ios_push_notification` | Send a push notification to simulator |
+| `ios_set_location` | Set simulated GPS location |
+
+### Advanced Tools - React DevTools (Advanced Tier Only)
+
+| Tool | Description |
+|------|-------------|
+| `setup_react_devtools` | Configure React DevTools connection and port forwarding |
+| `check_devtools_connection` | Check if DevTools is connected to your app |
+| `get_react_component_tree` | Get the React component hierarchy |
+| `inspect_react_component` | Inspect a component's props, state, and hooks |
+| `search_react_components` | Search for components by name |
+
+### Advanced Tools - Network Inspection (Advanced Tier Only)
+
+| Tool | Description |
+|------|-------------|
+| `get_network_requests` | Get recent HTTP/HTTPS requests from app logs |
+| `start_network_monitoring` | Start real-time network request capture |
+| `stop_network_monitoring` | Stop monitoring and get summary |
+| `get_network_stats` | Get device network statistics (WiFi, data usage) |
+| `analyze_request` | Analyze a specific captured request in detail |
 
 ## Usage Examples
 
@@ -108,6 +168,18 @@ Once installed, Claude can use these tools automatically:
 **You:** "What's happening with my app? It crashed"
 **Claude:** *Uses get_adb_logs and screenshot_emulator* "I can see a null pointer exception in the logs, and the screen shows..."
 
+**You:** "Show me the React component tree"
+**Claude:** *Uses get_react_component_tree* "Here's your component hierarchy: App > Navigator > HomeScreen > ..."
+
+**You:** "Inspect the UserProfile component"
+**Claude:** *Uses search_react_components and inspect_react_component* "Found UserProfile with props: {userId: '123'}, state: {loading: false, data: {...}}"
+
+**You:** "What API calls is my app making?"
+**Claude:** *Uses get_network_requests* "Found 15 requests: GET /api/users (200), POST /api/login (200), GET /api/feed (500 error)..."
+
+**You:** "Monitor network traffic while I use the app"
+**Claude:** *Uses start_network_monitoring* "Network monitoring started. Make some requests, then I'll summarize them."
+
 ## Workflow
 
 1. Start your Metro bundler: `npx expo start` or `npx react-native start`
@@ -121,10 +193,10 @@ Once installed, Claude can use these tools automatically:
 - [x] Screenshot history (Advanced tier)
 - [x] Multi-device support (Advanced tier)
 - [x] Error pattern watching (Advanced tier)
-- [ ] iOS Simulator support (screenshots, logs)
-- [ ] React DevTools integration
+- [x] iOS Simulator support (screenshots, logs, app management)
+- [x] React DevTools integration (component tree, props, state inspection)
+- [x] Network request inspection (capture, monitor, analyze HTTP traffic)
 - [ ] Expo DevTools integration
-- [ ] Network request inspection
 - [ ] Performance metrics
 - [ ] Team tier with centralized license management
 

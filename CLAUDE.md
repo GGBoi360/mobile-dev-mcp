@@ -33,9 +33,9 @@ npm test        # Run tests
 ## Architecture
 
 ### Tier System
-- **TRIAL**: 50 requests, all tools accessible, then blocked
-- **BASIC** ($6/mo): 13 core tools, unlimited requests
-- **ADVANCED** ($8/wk, $12/mo, $99/yr): All tools, unlimited everything
+- **TRIAL**: 50 requests, all 46 tools accessible, then blocked
+- **BASIC** ($6/mo): 17 core tools, unlimited requests
+- **ADVANCED** ($8/wk, $12/mo, $99/yr): All 46 tools (17 basic + 29 advanced), unlimited everything
 
 ### File Structure
 ```
@@ -62,3 +62,10 @@ src/
 - `adb shell input text "text"` - Android text input
 - `xcrun simctl io <udid> screenshot <path>` - iOS screenshot
 - `xcrun simctl spawn <udid> log stream` - iOS logs
+- `adb reverse tcp:8097 tcp:8097` - React DevTools port forwarding
+
+## React DevTools Integration
+React DevTools tools connect via WebSocket (port 8097) to the standalone DevTools app.
+- Start DevTools: `npx react-devtools`
+- Default port: 8097
+- Protocol: JSON messages over WebSocket

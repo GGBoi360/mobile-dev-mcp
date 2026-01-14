@@ -3,8 +3,8 @@
  *
  * Tiers:
  * - TRIAL: No license, 50 tool requests then blocked
- * - BASIC ($6/mo): 13 core tools, 50 line limits, 1 device
- * - ADVANCED ($8/wk, $12/mo, $99/yr): All 18 tools, unlimited, multi-device
+ * - BASIC ($6/mo): 17 core tools (Android + iOS basics), 50 line limits, 1 device
+ * - ADVANCED ($8/wk, $12/mo, $99/yr): All 46 tools, unlimited, multi-device
  *
  * Handles:
  * - License key validation against API
@@ -77,6 +77,7 @@ const TRIAL_LIMIT = 50; // Number of tool requests allowed in trial
 
 // BASIC TIER ($6/mo) - Core tools, available to all paid users
 export const BASIC_TOOLS = [
+  // Android tools
   "get_metro_logs",
   "get_adb_logs",
   "screenshot_emulator",
@@ -88,24 +89,52 @@ export const BASIC_TOOLS = [
   "get_device_info",
   "start_metro_logging",
   "stop_metro_logging",
+  // iOS Simulator tools
+  "list_ios_simulators",
+  "screenshot_ios_simulator",
+  "get_ios_simulator_logs",
+  "get_ios_simulator_info",
+  // License tools
   "get_license_status",
   "set_license_key",
 ] as const;
 
 // ADVANCED TIER ($8/wk, $12/mo, $99/yr) - Pro tools, only for Advanced subscribers
 export const ADVANCED_TOOLS = [
+  // Android streaming & monitoring
   "stream_adb_realtime",
   "stop_adb_streaming",
   "screenshot_history",
   "watch_for_errors",
   "multi_device_logs",
-  // Interaction tools
+  // Android interaction tools
   "tap_screen",
   "input_text",
   "press_button",
   "swipe_screen",
   "launch_app",
   "install_apk",
+  // iOS Simulator advanced tools
+  "boot_ios_simulator",
+  "shutdown_ios_simulator",
+  "install_ios_app",
+  "launch_ios_app",
+  "terminate_ios_app",
+  "ios_open_url",
+  "ios_push_notification",
+  "ios_set_location",
+  // React DevTools integration
+  "setup_react_devtools",
+  "check_devtools_connection",
+  "get_react_component_tree",
+  "inspect_react_component",
+  "search_react_components",
+  // Network inspection
+  "get_network_requests",
+  "start_network_monitoring",
+  "stop_network_monitoring",
+  "get_network_stats",
+  "analyze_request",
 ] as const;
 
 export type BasicTool = (typeof BASIC_TOOLS)[number];
@@ -309,10 +338,10 @@ To continue using Mobile Dev MCP, purchase a license:
 
 ┌─────────────────────────────────────────┐
 │  Basic Solo    $6/month                 │
-│  → 13 core tools, 50 log lines          │
+│  → 17 core tools, 50 log lines          │
 ├─────────────────────────────────────────┤
 │  Advanced Solo $12/month (or $99/year)  │
-│  → All 18 tools, unlimited logs         │
+│  → All 46 tools, unlimited logs         │
 │  → Real-time streaming, multi-device    │
 └─────────────────────────────────────────┘
 

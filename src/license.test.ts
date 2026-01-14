@@ -34,8 +34,8 @@ import {
 
 describe("Tool Classification", () => {
   describe("BASIC_TOOLS constant", () => {
-    it("should have 13 basic tools", () => {
-      expect(BASIC_TOOLS).toHaveLength(13);
+    it("should have 17 basic tools (13 Android + 4 iOS)", () => {
+      expect(BASIC_TOOLS).toHaveLength(17);
     });
 
     it("should include core logging tools", () => {
@@ -56,8 +56,8 @@ describe("Tool Classification", () => {
   });
 
   describe("ADVANCED_TOOLS constant", () => {
-    it("should have 11 advanced tools", () => {
-      expect(ADVANCED_TOOLS).toHaveLength(11);
+    it("should have 29 advanced tools (11 Android + 8 iOS + 5 DevTools + 5 Network)", () => {
+      expect(ADVANCED_TOOLS).toHaveLength(29);
     });
 
     it("should include streaming tools", () => {
@@ -167,9 +167,9 @@ describe("Tier Limits", () => {
 // ============================================================================
 
 describe("Tool Counts (Documentation Alignment)", () => {
-  it("should have 24 total tools (13 basic + 11 advanced)", () => {
+  it("should have 46 total tools (17 basic + 29 advanced)", () => {
     const totalTools = BASIC_TOOLS.length + ADVANCED_TOOLS.length;
-    expect(totalTools).toBe(24);
+    expect(totalTools).toBe(46);
   });
 
   it("should not have overlapping tools between basic and advanced", () => {

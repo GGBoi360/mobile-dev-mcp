@@ -31,3 +31,7 @@ npm-debug.log*
 
 # Test coverage
 coverage/
+
+# Test files (keep tests local only)
+*.test.ts
+vitest.config.ts

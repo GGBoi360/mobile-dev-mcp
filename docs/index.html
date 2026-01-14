@@ -184,7 +184,7 @@
     <section class="py-24 bg-gray-950" id="features">
         <div class="container mx-auto px-6">
             <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Everything Claude Needs</h2>
-            <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">17 tools that give Claude direct access to your mobile development environment</p>
+            <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">46 tools that give Claude direct access to your mobile development environment</p>
 
             <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 <!-- Feature 1 -->
@@ -276,13 +276,18 @@
                         <span class="ml-4 text-gray-400 text-sm mono">Terminal</span>
                     </div>
                     <div class="p-6 mono text-sm">
-                        <p class="text-gray-500 mb-2"># Clone and build</p>
-                        <p class="text-green-400 mb-1">git clone https://github.com/GGBoi360/mobile-dev-mcp</p>
-                        <p class="text-green-400 mb-1">cd mobile-dev-mcp</p>
-                        <p class="text-green-400 mb-4">npm install && npm run build</p>
+                        <p class="text-gray-500 mb-2"># Install via npx (recommended)</p>
+                        <p class="text-green-400 mb-4">claude mcp add mobile-dev -- npx @ggboi360/mobile-dev-mcp</p>
 
-                        <p class="text-gray-500 mb-2"># Add to Claude Code</p>
-                        <p class="text-green-400">claude mcp add mobile-dev -- node ./dist/index.js</p>
+                        <p class="text-gray-500 mb-2"># Or add to Claude Code config</p>
+                        <p class="text-green-400">{</p>
+                        <p class="text-green-400 pl-4">"mcpServers": {</p>
+                        <p class="text-green-400 pl-8">"mobile-dev": {</p>
+                        <p class="text-green-400 pl-12">"command": "npx",</p>
+                        <p class="text-green-400 pl-12">"args": ["@ggboi360/mobile-dev-mcp"]</p>
+                        <p class="text-green-400 pl-8">}</p>
+                        <p class="text-green-400 pl-4">}</p>
+                        <p class="text-green-400">}</p>
                     </div>
                 </div>
 
@@ -319,7 +324,7 @@
                             <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            9 core debugging tools
+                            17 core tools (Android + iOS)
                         </li>
                         <li class="flex items-center">
                             <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -373,7 +378,7 @@
                             <svg class="w-5 h-5 text-claude mr-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            <strong>All 17 tools</strong>
+                            <strong>All 46 tools</strong>
                         </li>
                         <li class="flex items-center">
                             <svg class="w-5 h-5 text-claude mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -443,7 +448,7 @@
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
                     <h3 class="font-semibold mb-2">What about iOS?</h3>
-                    <p class="text-gray-400">Currently Android-focused (ADB). iOS Simulator support is on the roadmap for Advanced users.</p>
+                    <p class="text-gray-400">Full iOS Simulator support is included! Screenshots, logs, app management, push notifications, and location simulation. Basic tier gets core iOS tools, Advanced gets full simulator control.</p>
                 </div>
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
@@ -458,7 +463,7 @@
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
                     <h3 class="font-semibold mb-2">Can I use this commercially?</h3>
-                    <p class="text-gray-400">Absolutely. Use it for personal projects, work, or client work. MIT licensed.</p>
+                    <p class="text-gray-400">Yes! Use it for personal projects or work. Licensed under Elastic License 2.0 - free for personal and commercial use, just can't resell or offer as a hosted service.</p>
                 </div>
             </div>
         </div>
