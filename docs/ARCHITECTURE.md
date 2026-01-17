@@ -118,12 +118,6 @@ All Free tools plus:
 }
 ```
 
-### Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `MOBILEDEV_DEV_MODE=true` | Bypass license checks (development only) |
-
 ## Platform Support
 
 ### Android

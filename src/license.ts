@@ -154,22 +154,6 @@ function saveLicenseCache(data: CachedLicense["data"]): void {
 // ============================================================================
 
 export async function checkLicense(): Promise<LicenseInfo> {
-  // Dev mode bypass - requires BOTH:
-  // 1. Environment variable MOBILEDEV_DEV_MODE=true
-  // 2. Running from source (not from npm package) - indicated by .dev-mode file in project root
-  // This prevents accidental or malicious activation in production
-  if (process.env.MOBILEDEV_DEV_MODE === "true") {
-    const devMarkerPath = path.join(path.dirname(new URL(import.meta.url).pathname), "..", ".dev-mode");
-    // On Windows, remove leading slash from URL pathname
-    const normalizedPath = process.platform === "win32" ? devMarkerPath.slice(1) : devMarkerPath;
-    if (fs.existsSync(normalizedPath)) {
-      console.error("DEV MODE - License checks bypassed (dev marker found)");
-      return { tier: "advanced", valid: true };
-    }
-    // Log attempt without marker for security awareness
-    console.error("DEV MODE env var set but .dev-mode marker file not found - ignoring");
-  }
-
   try {
     const cached = loadCachedLicense();
 
