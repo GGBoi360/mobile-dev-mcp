@@ -1,281 +1,194 @@
-# Mobile Dev MCP - Architecture & Monetization
+# Mobile Dev MCP - Architecture
 
 ## Overview
 
+Mobile Dev MCP is a **read-only** MCP server for debugging mobile apps. It provides observation and analysis tools without modifying device state.
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         USER FLOW                                │
+│                    MOBILE DEV MCP                               │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  1. User discovers tool (GitHub, Twitter, etc.)                 │
-│                    ↓                                             │
-│  2. Installs free version via Claude Code                       │
-│                    ↓                                             │
-│  3. Uses free features, gets hooked                             │
-│                    ↓                                             │
-│  4. Hits limitation ("Pro feature - upgrade at...")             │
-│                    ↓                                             │
-│  5. Goes to mobile-dev-mcp.com                                  │
-│                    ↓                                             │
-│  6. Pays via LemonSqueezy/Gumroad                               │
-│                    ↓                                             │
-│  7. Gets license key via email                                  │
-│                    ↓                                             │
-│  8. Adds key to config: ~/.mobiledev-mcp/config.json            │
-│                    ↓                                             │
-│  9. Pro features unlocked!                                      │
-│                                                                  │
+│                                                                 │
+│  VIEW      │ Screenshots (Android emulator, iOS Simulator)     │
+│  READ      │ UI tree, logs, device info, app info              │
+│  ANALYZE   │ Screen analysis, element finding, suggestions     │
+│  (no write)│ Safe for any environment                          │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+          ┌───────────────────────────────────┐
+          │   Your Mobile Device/Emulator     │
+          │   (Android ADB / iOS Simulator)   │
+          └───────────────────────────────────┘
 ```
 
-## License Validation Flow
+**Need automation?** For screen streaming, tapping, typing, and workflow orchestration, see [CodeControl](https://codecontrol.dev).
+
+## Tier System
+
+### Simple 2-Tier Model
+
+| Tier | Price | Tools | Description |
+|------|-------|-------|-------------|
+| **Free** | $0 | 12 | Basic debugging - screenshots, logs, device info |
+| **Advanced** | $18/mo | 21 | Full read-only - adds UI inspection + analysis |
+
+### Free Tier (12 tools)
+
+| Category | Tools |
+|----------|-------|
+| Screenshots | `screenshot_emulator`, `screenshot_ios_simulator` |
+| Device Listing | `list_devices`, `list_ios_simulators` |
+| Device Info | `get_device_info`, `get_ios_simulator_info`, `get_app_info` |
+| Logs | `get_adb_logs`, `get_metro_logs`, `get_ios_simulator_logs`, `check_metro_status` |
+| License | `get_license_status` |
+
+### Advanced Tier (21 tools = 12 free + 9 advanced)
+
+All Free tools plus:
+
+| Category | Tools |
+|----------|-------|
+| UI Inspection | `get_ui_tree`, `find_element`, `wait_for_element`, `get_element_property`, `assert_element` |
+| Screen Analysis | `suggest_action`, `analyze_screen`, `get_screen_text` |
+| License | `set_license_key` |
+
+### Tier Limits
+
+| Feature | Free | Advanced |
+|---------|------|----------|
+| Tools | 12 | 21 |
+| Log lines | 50 | 200 |
+| Devices | 1 | 3 |
+
+## License Validation
+
+### Flow
 
 ```
 ┌──────────────┐     ┌─────────────────┐     ┌──────────────────┐
-│  MCP Server  │────▶│  Validation API │────▶│  License Store   │
-│  (Local)     │◀────│  (Serverless)   │◀────│  (KV/Database)   │
+│  MCP Server  │────▶│  Cloudflare     │────▶│  LemonSqueezy    │
+│  (Local)     │◀────│  Worker API     │◀────│  License Store   │
 └──────────────┘     └─────────────────┘     └──────────────────┘
        │
-       │ Caches result locally
+       │ HMAC-signed cache (1 hour TTL)
        ▼
-┌──────────────┐
-│ ~/.mobiledev │
-│ /license.json│
-└──────────────┘
+┌──────────────────┐
+│ ~/.mobile-dev-mcp│
+│ /license.json    │
+└──────────────────┘
 ```
 
-### Validation Logic:
-1. On startup, check for cached license
-2. If cache is fresh (<24h), use cached result
-3. If cache is stale, validate against API
-4. If API is down, use cached result (grace period)
-5. If no cache and API down, run in free mode
+### Validation Logic
 
-## Payment Platform Comparison
+1. Check for valid HMAC-signed cache
+2. If cache fresh (<1 hour), use cached result
+3. If cache stale, re-validate with API
+4. If validation fails, clear cache and fall back to free
+5. If no license key, run in free mode
 
-| Platform      | Fee        | Pros                          | Cons                    |
-|---------------|------------|-------------------------------|-------------------------|
-| LemonSqueezy  | 5% + fees  | Dev-friendly, tax handling    | Smaller ecosystem       |
-| Gumroad       | 10%        | Super easy, well-known        | Higher fee              |
-| Stripe        | 2.9% + 30¢ | Full control, lowest fees     | More setup required     |
-| Paddle        | 5% + fees  | Tax compliance, SaaS-focused  | More enterprise-y       |
+### Cache Security
 
-### Recommendation: **LemonSqueezy**
-- Built for developers selling software
-- Handles VAT/tax automatically (important for international)
-- License key generation built-in
-- Good API for validation
-- Reasonable fees (5% + payment processing)
+- Cache is HMAC-signed with machine-specific secret
+- Prevents copying cache files between machines
+- 1-hour TTL for fast revocation
 
-## Pricing Strategy
+## Technical Details
 
-### Tier Structure:
+### Config File Location
+
 ```
-┌───────────────────────────────────────────────────────────────────────────────────┐
-│  TRIAL (50 requests)  │  BASIC ($6/mo)          │  ADVANCED ($8/wk, $12/mo, $99/yr) │
-├───────────────────────┼─────────────────────────┼───────────────────────────────────┤
-│  ✓ All 56 tools       │  ✓ 17 core tools        │  ✓ All 56 tools                   │
-│  ✓ 50 log lines       │  ✓ 50 log lines         │  ✓ Unlimited log lines            │
-│  ✓ 1 device           │  ✓ 1 device             │  ✓ 3 devices                      │
-│  ✗ 50 requests limit  │  ✓ Unlimited requests   │  ✓ Unlimited requests             │
-│                       │  ✗ No streaming         │  ✓ Real-time log streaming        │
-│                       │  ✗ No history           │  ✓ Screenshot history (20)        │
-│                       │  ✗ No interaction tools │  ✓ Multi-device logs              │
-│                       │  ✗ No iOS advanced      │  ✓ Error pattern watching         │
-│                       │  ✗ No React DevTools    │  ✓ Device interaction (Android)   │
-│                       │  ✗ No network inspect   │  ✓ iOS Simulator control          │
-│                       │  ✗ No Expo DevTools     │  ✓ React DevTools integration     │
-│                       │                         │  ✓ Network request inspection     │
-│                       │                         │  ✓ Expo DevTools integration      │
-└───────────────────────┴─────────────────────────┴───────────────────────────────────┘
+~/.mobile-dev-mcp/
+├── config.json      # User preferences (metroPort, etc.)
+└── license.json     # HMAC-signed license cache
 ```
 
-### Core Tools (17 - All Tiers):
+### license.json Format
 
-**Android (11):**
-get_metro_logs, get_adb_logs, screenshot_emulator, list_devices, check_metro_status,
-get_app_info, clear_app_data, restart_adb, get_device_info, start_metro_logging, stop_metro_logging
-
-**iOS Simulator (4):**
-list_ios_simulators, screenshot_ios_simulator, get_ios_simulator_logs, get_ios_simulator_info
-
-**License (2):**
-get_license_status, set_license_key
-
-### Advanced Tools (39 - Advanced Tier Only):
-
-**Android Streaming & Monitoring (5):**
-stream_adb_realtime, stop_adb_streaming, screenshot_history, watch_for_errors, multi_device_logs
-
-**Android Interaction (6):**
-tap_screen, input_text, press_button, swipe_screen, launch_app, install_apk
-
-**iOS Simulator Advanced (8):**
-boot_ios_simulator, shutdown_ios_simulator, install_ios_app, launch_ios_app,
-terminate_ios_app, ios_open_url, ios_push_notification, ios_set_location
-
-**React DevTools (5):**
-setup_react_devtools, check_devtools_connection, get_react_component_tree,
-inspect_react_component, search_react_components
-
-**Network Inspection (5):**
-get_network_requests, start_network_monitoring, stop_network_monitoring,
-get_network_stats, analyze_request
-
-**Expo DevTools (5):**
-check_expo_status, get_expo_config, expo_dev_menu, expo_reload, get_eas_builds
-
-**Performance Metrics (5):**
-get_cpu_usage, get_memory_usage, get_fps_stats, get_battery_stats, get_performance_snapshot
-
-### Why This Pricing:
-- **Basic $6/mo**: Low entry point for hobbyists, increased limits
-- **Advanced $12/mo**: Full features for professional mobile devs
-- **$8/week option**: For short-term projects or trying before committing
-- **$99/year**: ~30% discount, incentivizes annual commitment
-- Comparable to other dev tools (Raycast Pro: $8/mo, etc.)
-
-### Future: Team Tier ($49/month)
-- 5 seats included
-- Centralized license management
-- Team configuration sync
-- Usage analytics
-
-## Technical Implementation
-
-### Config File Location:
-```
-~/.mobiledev-mcp/
-├── config.json      # User preferences
-├── license.json     # License cache
-├── trial.json       # Trial usage tracking
-└── logs/            # Debug logs (optional)
-```
-
-### config.json:
 ```json
 {
-  "licenseKey": "MDM_XXXX-XXXX-XXXX-XXXX",
-  "metroPort": 8081,
-  "logBufferSize": 100,
-  "defaultDevice": null,
-  "theme": "auto"
+  "data": {
+    "tier": "advanced",
+    "licenseKey": "lk_XXXX...",
+    "expiresAt": "2027-01-14T12:00:00Z",
+    "lastValidated": 1736850000000
+  },
+  "signature": "hmac-sha256-signature..."
 }
 ```
 
-### license.json (cached):
-```json
-{
-  "key": "MDM_XXXX-XXXX-XXXX-XXXX",
-  "valid": true,
-  "tier": "advanced",
-  "email": "user@example.com",
-  "validatedAt": "2026-01-14T12:00:00Z",
-  "expiresAt": "2027-01-14T12:00:00Z"
-}
-```
+### Environment Variables
 
-Note: `tier` can be `"trial"`, `"basic"`, or `"advanced"`.
+| Variable | Description |
+|----------|-------------|
+| `MOBILEDEV_DEV_MODE=true` | Bypass license checks (development only) |
 
-## Validation API (Serverless)
+## Platform Support
 
-### Endpoint: POST /validate
+### Android
+
+- Uses ADB (Android Debug Bridge)
+- Auto-detects SDK path on Windows, macOS, Linux
+- Supports emulators and physical devices
+
+### iOS (macOS only)
+
+- Uses `xcrun simctl`
+- Requires Xcode with Simulator
+- Supports booted simulators
+
+## API Endpoints
+
+### License Validation
+
+**POST** `https://mobiledev-license-api.giladworkersdev.workers.dev/validate`
+
 ```json
 // Request
 {
-  "license_key": "lk_XXXX-XXXX-XXXX-XXXX",
-  "instance_id": "hash-of-machine-info"
+  "license_key": "lk_XXXX...",
+  "instance_id": "machine-uuid"
 }
 
 // Response (success)
 {
   "valid": true,
-  "tier": "basic",  // or "advanced"
-  "license_key": {
-    "status": "active",
-    "activation_limit": 3,
-    "activation_usage": 1,
-    "expires_at": "2027-01-14T12:00:00Z"
-  },
-  "meta": {
-    "customer_email": "user@example.com",
-    "product_name": "Mobile Dev MCP",
-    "variant_name": "Advanced Monthly"
-  }
+  "meta": { "product_name": "Advanced Monthly" },
+  "license_key": { "expires_at": "2027-01-14T12:00:00Z" }
 }
 
 // Response (invalid)
 {
   "valid": false,
-  "error": "License expired or invalid"
+  "error": "Invalid license key"
 }
 ```
 
-Note: Tier is determined by checking `variant_name` for "basic" or "advanced" keywords.
+## File Structure
 
-### Hosting Options:
-1. **Cloudflare Workers** (Recommended)
-   - Free tier: 100k requests/day
-   - KV storage for licenses
-   - Global edge = fast validation
+```
+src/
+├── index.ts      # MCP server, tool definitions, handlers
+├── license.ts    # License validation, tier gating, HMAC
+├── types.ts      # Type definitions, tool arrays, tier limits
+├── utils.ts      # ADB/xcrun utilities, screenshot capture
+├── *.test.ts     # Vitest test files
+```
 
-2. **Vercel Edge Functions**
-   - Free tier available
-   - Easy deployment
+## Read-Only Design
 
-3. **Supabase Edge Functions**
-   - If you want PostgreSQL for licenses
+Mobile Dev MCP is intentionally read-only:
 
-## Revenue Projections
+- **No device state changes** - Cannot tap, type, install apps
+- **No streaming** - Single screenshots only (streaming is CodeControl exclusive)
+- **No automation** - Observation and analysis only
+- **Safe for production** - Cannot accidentally modify app data
 
-### Conservative (First 6 months):
-- 500 trial users
-- 15 Basic users ($6/mo) + 10 Advanced users ($12/mo)
-- $210/month = $2,520/year
+This design makes it safe to use in any environment while providing powerful debugging capabilities.
 
-### Moderate (Year 1):
-- 2,000 trial users
-- 100 Basic users ($6/mo) + 50 Advanced users ($12/mo)
-- $1,200/month = $14,400/year
+## Links
 
-### Optimistic (Year 2+):
-- 10,000 trial users
-- 300 Basic users + 200 Advanced users + 20 team licenses ($49/mo)
-- $5,180/month = $62,160/year
-
-## Launch Checklist
-
-### Phase 1: MVP Launch ✅
-- [x] Fix Metro logging bug
-- [x] Complete screenshot function
-- [x] Implement all 17 core tools
-- [x] Push to GitHub
-- [ ] Create demo GIF
-- [ ] Tweet at @anthropic, @boris_cherny
-- [ ] Post in React Native communities
-
-### Phase 2: Add Licensing ✅
-- [x] Set up LemonSqueezy account
-- [x] Create products (Basic $6/mo, Advanced $8/wk/$12/mo/$99/yr)
-- [x] Build validation API (Cloudflare Workers)
-- [x] Add license module to MCP server
-- [x] Gate 29 advanced features
-- [x] Create landing page (mobile-dev-mcp.com)
-
-### Phase 3: Pro Features ✅
-- [x] Real-time log streaming (stream_adb_realtime)
-- [x] Screenshot history (screenshot_history)
-- [x] Multi-device logs (multi_device_logs)
-- [x] Error pattern watching (watch_for_errors)
-- [x] Device interaction tools (tap_screen, input_text, press_button, swipe_screen, launch_app, install_apk)
-- [x] iOS Simulator support (12 tools: screenshots, logs, boot/shutdown, app management, push notifications, location)
-- [x] React DevTools integration (5 tools: setup, connection check, component tree, inspect, search)
-- [x] Network request inspection (5 tools: get requests, monitoring, stats, analyze)
-- [x] Expo DevTools integration (5 tools: server status, config, dev menu, reload, EAS builds)
-- [x] Performance metrics (5 tools: CPU, memory, FPS, battery, snapshot)
-
-### Phase 4: Scale (Upcoming)
-- [ ] Team tier ($49/mo)
-- [ ] Usage analytics
-- [ ] Referral program
-- [ ] Enterprise outreach
+- **Website**: https://mobiledevmcp.dev
+- **Pricing**: https://mobiledevmcp.dev/pricing
+- **Full Automation**: https://codecontrol.dev

@@ -32,6 +32,19 @@ npm-debug.log*
 # Test coverage
 coverage/
 
-# Test files (keep tests local only)
-*.test.ts
-vitest.config.ts
+# Internal planning docs (not for public)
+ROADMAP.md
+
+# npm pack output
+*.tgz
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Screenshot captures (testing)
+screenshots/
+
+# Debug output
+debug/

@@ -19,13 +19,15 @@ vi.mock("os", async () => {
 
 // Import after mocks
 import {
-  BASIC_TOOLS,
+  FREE_TOOLS,
   ADVANCED_TOOLS,
   TIER_LIMITS,
-  isAdvancedTool,
-  isBasicTool,
-  getTierLimits,
-  LicenseTier,
+  canAccessTool,
+  isFreeTool,
+  isAdvancedOnlyTool,
+  getMaxLogLines,
+  getMaxDevices,
+  MobileDevTier,
 } from "./license.js";
 
 // ============================================================================
@@ -33,91 +35,158 @@ import {
 // ============================================================================
 
 describe("Tool Classification", () => {
-  describe("BASIC_TOOLS constant", () => {
-    it("should have 17 basic tools (13 Android + 4 iOS)", () => {
-      expect(BASIC_TOOLS).toHaveLength(17);
+  describe("FREE_TOOLS constant", () => {
+    it("should have 12 free tools", () => {
+      expect(FREE_TOOLS).toHaveLength(12);
     });
 
-    it("should include core logging tools", () => {
-      expect(BASIC_TOOLS).toContain("get_metro_logs");
-      expect(BASIC_TOOLS).toContain("get_adb_logs");
+    it("should include screenshot tools", () => {
+      expect(FREE_TOOLS).toContain("screenshot_emulator");
+      expect(FREE_TOOLS).toContain("screenshot_ios_simulator");
     });
 
-    it("should include device management tools", () => {
-      expect(BASIC_TOOLS).toContain("list_devices");
-      expect(BASIC_TOOLS).toContain("get_device_info");
-      expect(BASIC_TOOLS).toContain("restart_adb");
+    it("should include device listing tools", () => {
+      expect(FREE_TOOLS).toContain("list_devices");
+      expect(FREE_TOOLS).toContain("list_ios_simulators");
     });
 
-    it("should include license tools", () => {
-      expect(BASIC_TOOLS).toContain("get_license_status");
-      expect(BASIC_TOOLS).toContain("set_license_key");
+    it("should include device info tools", () => {
+      expect(FREE_TOOLS).toContain("get_device_info");
+      expect(FREE_TOOLS).toContain("get_ios_simulator_info");
+    });
+
+    it("should include log tools", () => {
+      expect(FREE_TOOLS).toContain("get_adb_logs");
+      expect(FREE_TOOLS).toContain("get_metro_logs");
+      expect(FREE_TOOLS).toContain("get_ios_simulator_logs");
+    });
+
+    it("should include utility tools", () => {
+      expect(FREE_TOOLS).toContain("check_metro_status");
+      expect(FREE_TOOLS).toContain("get_app_info");
+      expect(FREE_TOOLS).toContain("get_license_status");
+    });
+
+    it("should NOT include advanced tools", () => {
+      expect(FREE_TOOLS).not.toContain("get_ui_tree");
+      expect(FREE_TOOLS).not.toContain("find_element");
+      expect(FREE_TOOLS).not.toContain("analyze_screen");
+      expect(FREE_TOOLS).not.toContain("set_license_key");
     });
   });
 
   describe("ADVANCED_TOOLS constant", () => {
-    it("should have 39 advanced tools (11 Android + 8 iOS + 5 DevTools + 5 Network + 5 Expo + 5 Perf)", () => {
-      expect(ADVANCED_TOOLS).toHaveLength(39);
+    it("should have 21 total tools (12 free + 9 advanced-only)", () => {
+      expect(ADVANCED_TOOLS).toHaveLength(21);
     });
 
-    it("should include streaming tools", () => {
-      expect(ADVANCED_TOOLS).toContain("stream_adb_realtime");
-      expect(ADVANCED_TOOLS).toContain("stop_adb_streaming");
+    it("should include all free tools", () => {
+      FREE_TOOLS.forEach((tool) => {
+        expect(ADVANCED_TOOLS).toContain(tool);
+      });
     });
 
-    it("should include monitoring tools", () => {
-      expect(ADVANCED_TOOLS).toContain("screenshot_history");
-      expect(ADVANCED_TOOLS).toContain("watch_for_errors");
-      expect(ADVANCED_TOOLS).toContain("multi_device_logs");
+    it("should include UI inspection tools", () => {
+      expect(ADVANCED_TOOLS).toContain("get_ui_tree");
+      expect(ADVANCED_TOOLS).toContain("find_element");
+      expect(ADVANCED_TOOLS).toContain("wait_for_element");
+      expect(ADVANCED_TOOLS).toContain("get_element_property");
+      expect(ADVANCED_TOOLS).toContain("assert_element");
     });
 
-    it("should include interaction tools", () => {
-      expect(ADVANCED_TOOLS).toContain("tap_screen");
-      expect(ADVANCED_TOOLS).toContain("input_text");
-      expect(ADVANCED_TOOLS).toContain("press_button");
-      expect(ADVANCED_TOOLS).toContain("swipe_screen");
-      expect(ADVANCED_TOOLS).toContain("launch_app");
-      expect(ADVANCED_TOOLS).toContain("install_apk");
+    it("should include screen analysis tools", () => {
+      expect(ADVANCED_TOOLS).toContain("suggest_action");
+      expect(ADVANCED_TOOLS).toContain("analyze_screen");
+      expect(ADVANCED_TOOLS).toContain("get_screen_text");
+    });
+
+    it("should include set_license_key", () => {
+      expect(ADVANCED_TOOLS).toContain("set_license_key");
+    });
+
+    it("should NOT include removed streaming tools", () => {
+      expect(ADVANCED_TOOLS).not.toContain("start_screen_stream");
+      expect(ADVANCED_TOOLS).not.toContain("stop_screen_stream");
+      expect(ADVANCED_TOOLS).not.toContain("get_stream_frames");
+      expect(ADVANCED_TOOLS).not.toContain("start_fast_stream");
+      expect(ADVANCED_TOOLS).not.toContain("get_live_frame");
+    });
+
+    it("should NOT include removed automation tools", () => {
+      expect(ADVANCED_TOOLS).not.toContain("tap_element");
+      expect(ADVANCED_TOOLS).not.toContain("input_to_element");
+      expect(ADVANCED_TOOLS).not.toContain("swipe_screen");
+      expect(ADVANCED_TOOLS).not.toContain("scroll_to_element");
     });
   });
 
-  describe("isAdvancedTool()", () => {
-    it("should return true for advanced tools", () => {
-      expect(isAdvancedTool("stream_adb_realtime")).toBe(true);
-      expect(isAdvancedTool("tap_screen")).toBe(true);
-      expect(isAdvancedTool("swipe_screen")).toBe(true);
-      expect(isAdvancedTool("multi_device_logs")).toBe(true);
+  describe("isFreeTool()", () => {
+    it("should return true for free tools", () => {
+      expect(isFreeTool("screenshot_emulator")).toBe(true);
+      expect(isFreeTool("list_devices")).toBe(true);
+      expect(isFreeTool("get_adb_logs")).toBe(true);
+      expect(isFreeTool("get_license_status")).toBe(true);
     });
 
-    it("should return false for basic tools", () => {
-      expect(isAdvancedTool("get_metro_logs")).toBe(false);
-      expect(isAdvancedTool("screenshot_emulator")).toBe(false);
-      expect(isAdvancedTool("list_devices")).toBe(false);
+    it("should return false for advanced-only tools", () => {
+      expect(isFreeTool("get_ui_tree")).toBe(false);
+      expect(isFreeTool("analyze_screen")).toBe(false);
+      expect(isFreeTool("set_license_key")).toBe(false);
     });
 
     it("should return false for unknown tools", () => {
-      expect(isAdvancedTool("unknown_tool")).toBe(false);
-      expect(isAdvancedTool("")).toBe(false);
+      expect(isFreeTool("unknown_tool")).toBe(false);
+      expect(isFreeTool("")).toBe(false);
     });
   });
 
-  describe("isBasicTool()", () => {
-    it("should return true for basic tools", () => {
-      expect(isBasicTool("get_metro_logs")).toBe(true);
-      expect(isBasicTool("screenshot_emulator")).toBe(true);
-      expect(isBasicTool("list_devices")).toBe(true);
-      expect(isBasicTool("get_license_status")).toBe(true);
+  describe("isAdvancedOnlyTool()", () => {
+    it("should return true for advanced-only tools", () => {
+      expect(isAdvancedOnlyTool("get_ui_tree")).toBe(true);
+      expect(isAdvancedOnlyTool("find_element")).toBe(true);
+      expect(isAdvancedOnlyTool("analyze_screen")).toBe(true);
+      expect(isAdvancedOnlyTool("set_license_key")).toBe(true);
     });
 
-    it("should return false for advanced tools", () => {
-      expect(isBasicTool("stream_adb_realtime")).toBe(false);
-      expect(isBasicTool("tap_screen")).toBe(false);
-      expect(isBasicTool("multi_device_logs")).toBe(false);
+    it("should return false for free tools", () => {
+      expect(isAdvancedOnlyTool("screenshot_emulator")).toBe(false);
+      expect(isAdvancedOnlyTool("list_devices")).toBe(false);
+      expect(isAdvancedOnlyTool("get_adb_logs")).toBe(false);
     });
 
     it("should return false for unknown tools", () => {
-      expect(isBasicTool("unknown_tool")).toBe(false);
-      expect(isBasicTool("")).toBe(false);
+      expect(isAdvancedOnlyTool("unknown_tool")).toBe(false);
+    });
+  });
+
+  describe("canAccessTool()", () => {
+    it("should allow free tools for free tier", () => {
+      expect(canAccessTool("screenshot_emulator", "free")).toBe(true);
+      expect(canAccessTool("list_devices", "free")).toBe(true);
+      expect(canAccessTool("get_adb_logs", "free")).toBe(true);
+    });
+
+    it("should allow free tools for advanced tier", () => {
+      expect(canAccessTool("screenshot_emulator", "advanced")).toBe(true);
+      expect(canAccessTool("list_devices", "advanced")).toBe(true);
+      expect(canAccessTool("get_adb_logs", "advanced")).toBe(true);
+    });
+
+    it("should deny advanced-only tools for free tier", () => {
+      expect(canAccessTool("get_ui_tree", "free")).toBe(false);
+      expect(canAccessTool("analyze_screen", "free")).toBe(false);
+      expect(canAccessTool("set_license_key", "free")).toBe(false);
+    });
+
+    it("should allow advanced-only tools for advanced tier", () => {
+      expect(canAccessTool("get_ui_tree", "advanced")).toBe(true);
+      expect(canAccessTool("analyze_screen", "advanced")).toBe(true);
+      expect(canAccessTool("set_license_key", "advanced")).toBe(true);
+    });
+
+    it("should deny unknown tools for all tiers", () => {
+      expect(canAccessTool("unknown_tool", "free")).toBe(false);
+      expect(canAccessTool("unknown_tool", "advanced")).toBe(false);
     });
   });
 });
@@ -128,36 +197,51 @@ describe("Tool Classification", () => {
 
 describe("Tier Limits", () => {
   describe("TIER_LIMITS constant", () => {
-    it("should have trial, basic, and advanced tiers", () => {
-      expect(TIER_LIMITS).toHaveProperty("trial");
-      expect(TIER_LIMITS).toHaveProperty("basic");
+    it("should have free and advanced tiers only", () => {
+      expect(TIER_LIMITS).toHaveProperty("free");
       expect(TIER_LIMITS).toHaveProperty("advanced");
+      expect(Object.keys(TIER_LIMITS)).toHaveLength(2);
     });
 
-    it("should have correct trial limits", () => {
-      expect(TIER_LIMITS.trial.maxLogLines).toBe(50);
-      expect(TIER_LIMITS.trial.maxDevices).toBe(1);
-      expect(TIER_LIMITS.trial.screenshotHistory).toBe(0);
+    it("should have correct free tier limits", () => {
+      expect(TIER_LIMITS.free.maxLogLines).toBe(50);
+      expect(TIER_LIMITS.free.maxDevices).toBe(1);
     });
 
-    it("should have correct basic limits", () => {
-      expect(TIER_LIMITS.basic.maxLogLines).toBe(50);
-      expect(TIER_LIMITS.basic.maxDevices).toBe(1);
-      expect(TIER_LIMITS.basic.screenshotHistory).toBe(0);
-    });
-
-    it("should have correct advanced limits", () => {
-      expect(TIER_LIMITS.advanced.maxLogLines).toBe(Infinity);
+    it("should have correct advanced tier limits", () => {
+      expect(TIER_LIMITS.advanced.maxLogLines).toBe(200);
       expect(TIER_LIMITS.advanced.maxDevices).toBe(3);
-      expect(TIER_LIMITS.advanced.screenshotHistory).toBe(20);
+    });
+
+    it("advanced tier should have better limits than free", () => {
+      expect(TIER_LIMITS.advanced.maxLogLines).toBeGreaterThan(
+        TIER_LIMITS.free.maxLogLines
+      );
+      expect(TIER_LIMITS.advanced.maxDevices).toBeGreaterThan(
+        TIER_LIMITS.free.maxDevices
+      );
     });
   });
 
-  describe("getTierLimits()", () => {
+  describe("getMaxLogLines()", () => {
     it("should return correct limits for each tier", () => {
-      expect(getTierLimits("trial")).toEqual(TIER_LIMITS.trial);
-      expect(getTierLimits("basic")).toEqual(TIER_LIMITS.basic);
-      expect(getTierLimits("advanced")).toEqual(TIER_LIMITS.advanced);
+      expect(getMaxLogLines("free")).toBe(50);
+      expect(getMaxLogLines("advanced")).toBe(200);
+    });
+
+    it("should return default 50 for unknown tier", () => {
+      expect(getMaxLogLines("unknown" as MobileDevTier)).toBe(50);
+    });
+  });
+
+  describe("getMaxDevices()", () => {
+    it("should return correct limits for each tier", () => {
+      expect(getMaxDevices("free")).toBe(1);
+      expect(getMaxDevices("advanced")).toBe(3);
+    });
+
+    it("should return default 1 for unknown tier", () => {
+      expect(getMaxDevices("unknown" as MobileDevTier)).toBe(1);
     });
   });
 });
@@ -167,88 +251,93 @@ describe("Tier Limits", () => {
 // ============================================================================
 
 describe("Tool Counts (Documentation Alignment)", () => {
-  it("should have 56 total tools (17 basic + 39 advanced)", () => {
-    const totalTools = BASIC_TOOLS.length + ADVANCED_TOOLS.length;
-    expect(totalTools).toBe(56);
+  it("should have 21 total tools", () => {
+    expect(ADVANCED_TOOLS).toHaveLength(21);
   });
 
-  it("should not have overlapping tools between basic and advanced", () => {
-    const basicSet = new Set<string>(BASIC_TOOLS);
-    const advancedSet = new Set<string>(ADVANCED_TOOLS);
+  it("should have 12 free tools", () => {
+    expect(FREE_TOOLS).toHaveLength(12);
+  });
 
-    ADVANCED_TOOLS.forEach((tool) => {
-      expect(basicSet.has(tool)).toBe(false);
-    });
+  it("should have 9 advanced-only tools", () => {
+    const advancedOnlyTools = ADVANCED_TOOLS.filter(
+      (tool) => !FREE_TOOLS.includes(tool)
+    );
+    expect(advancedOnlyTools).toHaveLength(9);
+  });
 
-    BASIC_TOOLS.forEach((tool) => {
-      expect(advancedSet.has(tool)).toBe(false);
+  it("free tools should be a subset of advanced tools", () => {
+    const advancedSet = new Set(ADVANCED_TOOLS);
+    FREE_TOOLS.forEach((tool) => {
+      expect(advancedSet.has(tool)).toBe(true);
     });
+  });
+
+  it("should have no duplicate tools in free tier", () => {
+    const uniqueTools = new Set(FREE_TOOLS);
+    expect(uniqueTools.size).toBe(FREE_TOOLS.length);
+  });
+
+  it("should have no duplicate tools in advanced tier", () => {
+    const uniqueTools = new Set(ADVANCED_TOOLS);
+    expect(uniqueTools.size).toBe(ADVANCED_TOOLS.length);
   });
 });
 
 // ============================================================================
-// TIER HIERARCHY TESTS
+// READ-ONLY VERIFICATION
 // ============================================================================
 
-describe("Tier Hierarchy", () => {
-  const tiers: LicenseTier[] = ["trial", "basic", "advanced"];
+describe("Read-Only Tool Verification", () => {
+  const allTools = ADVANCED_TOOLS;
 
-  it("should have trial with most restrictions", () => {
-    // Trial and Basic have same log limits
-    expect(TIER_LIMITS.trial.maxLogLines).toBe(TIER_LIMITS.basic.maxLogLines);
-    expect(TIER_LIMITS.trial.maxDevices).toBe(1);
-  });
-
-  it("should have advanced with least restrictions", () => {
-    expect(TIER_LIMITS.advanced.maxLogLines).toBe(Infinity);
-    expect(TIER_LIMITS.advanced.maxDevices).toBeGreaterThan(
-      TIER_LIMITS.basic.maxDevices
+  it("should NOT include any tap/click automation tools", () => {
+    const tapTools = allTools.filter(
+      (tool) => tool.includes("tap") || tool.includes("click")
     );
-    expect(TIER_LIMITS.advanced.screenshotHistory).toBeGreaterThan(0);
+    // The only tap-related tool should NOT be present (tap_element was removed)
+    expect(tapTools).toHaveLength(0);
   });
 
-  it("advanced should have better or equal limits than basic", () => {
-    expect(TIER_LIMITS.advanced.maxLogLines).toBeGreaterThanOrEqual(
-      TIER_LIMITS.basic.maxLogLines
+  it("should NOT include any input/type automation tools", () => {
+    const inputTools = allTools.filter(
+      (tool) => tool.includes("input") && !tool.includes("info")
     );
-    expect(TIER_LIMITS.advanced.maxDevices).toBeGreaterThanOrEqual(
-      TIER_LIMITS.basic.maxDevices
+    expect(inputTools).toHaveLength(0);
+  });
+
+  it("should NOT include any swipe/scroll automation tools", () => {
+    const swipeTools = allTools.filter(
+      (tool) => tool.includes("swipe") || tool.includes("scroll")
     );
-    expect(TIER_LIMITS.advanced.screenshotHistory).toBeGreaterThanOrEqual(
-      TIER_LIMITS.basic.screenshotHistory
-    );
-  });
-});
-
-// ============================================================================
-// INTERACTION TOOLS TESTS
-// ============================================================================
-
-describe("Interaction Tools (New Features)", () => {
-  const interactionTools = [
-    "tap_screen",
-    "input_text",
-    "press_button",
-    "swipe_screen",
-    "launch_app",
-    "install_apk",
-  ];
-
-  it("should have all 6 interaction tools", () => {
-    expect(interactionTools.length).toBe(6);
+    expect(swipeTools).toHaveLength(0);
   });
 
-  it("all interaction tools should be Advanced tier", () => {
-    interactionTools.forEach((tool) => {
-      expect(isAdvancedTool(tool)).toBe(true);
-      expect(ADVANCED_TOOLS).toContain(tool);
-    });
+  it("should NOT include any streaming tools", () => {
+    const streamTools = allTools.filter((tool) => tool.includes("stream"));
+    expect(streamTools).toHaveLength(0);
   });
 
-  it("interaction tools should not be in basic tier", () => {
-    interactionTools.forEach((tool) => {
-      expect(isBasicTool(tool)).toBe(false);
-      expect(BASIC_TOOLS).not.toContain(tool);
+  it("all tools should be read-only observation tools", () => {
+    // Verify known read-only patterns
+    const readOnlyPatterns = [
+      "screenshot",
+      "list",
+      "get",
+      "check",
+      "find",
+      "wait",
+      "assert",
+      "suggest",
+      "analyze",
+      "set_license", // This modifies local config only, not the device
+    ];
+
+    allTools.forEach((tool) => {
+      const isReadOnly = readOnlyPatterns.some((pattern) =>
+        tool.includes(pattern)
+      );
+      expect(isReadOnly).toBe(true);
     });
   });
 });

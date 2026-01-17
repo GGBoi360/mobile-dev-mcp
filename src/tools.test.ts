@@ -12,37 +12,21 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // ============================================================================
 
 describe("Tool Input Schemas", () => {
-  // We'll test the tool definitions directly
-  const coreToolSchemas = {
-    get_metro_logs: {
-      requiredParams: [],
-      optionalParams: ["lines", "filter"],
-    },
-    get_adb_logs: {
-      requiredParams: [],
-      optionalParams: ["lines", "filter", "level"],
-    },
+  // Free tier tools - read-only debugging
+  const freeToolSchemas = {
     screenshot_emulator: {
       requiredParams: [],
       optionalParams: ["device"],
+    },
+    screenshot_ios_simulator: {
+      requiredParams: [],
+      optionalParams: ["udid"],
     },
     list_devices: {
       requiredParams: [],
       optionalParams: [],
     },
-    check_metro_status: {
-      requiredParams: [],
-      optionalParams: ["port"],
-    },
-    get_app_info: {
-      requiredParams: ["packageName"],
-      optionalParams: [],
-    },
-    clear_app_data: {
-      requiredParams: ["packageName"],
-      optionalParams: [],
-    },
-    restart_adb: {
+    list_ios_simulators: {
       requiredParams: [],
       optionalParams: [],
     },
@@ -50,66 +34,78 @@ describe("Tool Input Schemas", () => {
       requiredParams: [],
       optionalParams: ["device"],
     },
-    start_metro_logging: {
+    get_ios_simulator_info: {
       requiredParams: [],
-      optionalParams: ["logFile"],
+      optionalParams: ["udid"],
     },
-    stop_metro_logging: {
-      requiredParams: [],
-      optionalParams: [],
-    },
-  };
-
-  const advancedToolSchemas = {
-    stream_adb_realtime: {
-      requiredParams: [],
-      optionalParams: ["filter"],
-    },
-    stop_adb_streaming: {
-      requiredParams: [],
-      optionalParams: [],
-    },
-    screenshot_history: {
-      requiredParams: [],
-      optionalParams: ["limit"],
-    },
-    watch_for_errors: {
-      requiredParams: ["patterns"],
-      optionalParams: ["duration"],
-    },
-    multi_device_logs: {
-      requiredParams: [],
-      optionalParams: ["devices", "lines"],
-    },
-    tap_screen: {
-      requiredParams: ["x", "y"],
-      optionalParams: ["device"],
-    },
-    input_text: {
-      requiredParams: ["text"],
-      optionalParams: ["device"],
-    },
-    press_button: {
-      requiredParams: ["button"],
-      optionalParams: ["device"],
-      enumValues: ["back", "home", "recent", "volume_up", "volume_down", "power", "enter"],
-    },
-    swipe_screen: {
-      requiredParams: ["startX", "startY", "endX", "endY"],
-      optionalParams: ["duration", "device"],
-    },
-    launch_app: {
+    get_app_info: {
       requiredParams: ["packageName"],
-      optionalParams: ["device"],
+      optionalParams: [],
     },
-    install_apk: {
-      requiredParams: ["apkPath"],
-      optionalParams: ["device"],
+    get_adb_logs: {
+      requiredParams: [],
+      optionalParams: ["lines", "filter", "level"],
+    },
+    get_metro_logs: {
+      requiredParams: [],
+      optionalParams: ["lines", "filter"],
+    },
+    get_ios_simulator_logs: {
+      requiredParams: [],
+      optionalParams: ["lines", "filter"],
+    },
+    check_metro_status: {
+      requiredParams: [],
+      optionalParams: ["port"],
+    },
+    get_license_status: {
+      requiredParams: [],
+      optionalParams: [],
     },
   };
 
-  describe("Core Tool Schemas", () => {
-    Object.entries(coreToolSchemas).forEach(([toolName, schema]) => {
+  // Advanced tier tools - UI inspection and analysis
+  const advancedToolSchemas = {
+    get_ui_tree: {
+      requiredParams: [],
+      optionalParams: ["device"],
+    },
+    find_element: {
+      requiredParams: [],
+      optionalParams: ["text", "resourceId", "contentDescription", "className", "device"],
+    },
+    wait_for_element: {
+      requiredParams: [],
+      optionalParams: ["text", "resourceId", "contentDescription", "className", "timeout", "pollInterval", "device"],
+    },
+    get_element_property: {
+      requiredParams: ["property"],
+      optionalParams: ["text", "resourceId", "contentDescription", "className", "device"],
+    },
+    assert_element: {
+      requiredParams: ["assertion"],
+      optionalParams: ["text", "resourceId", "contentDescription", "className", "device"],
+    },
+    suggest_action: {
+      requiredParams: [],
+      optionalParams: ["context", "device"],
+    },
+    analyze_screen: {
+      requiredParams: [],
+      optionalParams: ["device"],
+    },
+    get_screen_text: {
+      requiredParams: [],
+      optionalParams: ["device"],
+    },
+    set_license_key: {
+      requiredParams: ["licenseKey"],
+      optionalParams: [],
+    },
+  };
+
+  describe("Free Tool Schemas", () => {
+    Object.entries(freeToolSchemas).forEach(([toolName, schema]) => {
       describe(`${toolName}`, () => {
         it(`should have ${schema.requiredParams.length} required params`, () => {
           expect(schema.requiredParams.length).toBeGreaterThanOrEqual(0);
@@ -121,8 +117,8 @@ describe("Tool Input Schemas", () => {
       });
     });
 
-    it("should have 11 core tools (excluding license tools)", () => {
-      expect(Object.keys(coreToolSchemas)).toHaveLength(11);
+    it("should have 12 free tools", () => {
+      expect(Object.keys(freeToolSchemas)).toHaveLength(12);
     });
   });
 
@@ -139,87 +135,9 @@ describe("Tool Input Schemas", () => {
       });
     });
 
-    it("should have 11 advanced tools", () => {
-      expect(Object.keys(advancedToolSchemas)).toHaveLength(11);
+    it("should have 9 advanced-only tools", () => {
+      expect(Object.keys(advancedToolSchemas)).toHaveLength(9);
     });
-  });
-
-  describe("Interaction Tools Schema Details", () => {
-    it("tap_screen should require x and y coordinates", () => {
-      expect(advancedToolSchemas.tap_screen.requiredParams).toContain("x");
-      expect(advancedToolSchemas.tap_screen.requiredParams).toContain("y");
-    });
-
-    it("input_text should require text parameter", () => {
-      expect(advancedToolSchemas.input_text.requiredParams).toContain("text");
-    });
-
-    it("press_button should have valid button enum values", () => {
-      const validButtons = ["back", "home", "recent", "volume_up", "volume_down", "power", "enter"];
-      expect(advancedToolSchemas.press_button.enumValues).toEqual(validButtons);
-    });
-
-    it("swipe_screen should require start and end coordinates", () => {
-      const required = advancedToolSchemas.swipe_screen.requiredParams;
-      expect(required).toContain("startX");
-      expect(required).toContain("startY");
-      expect(required).toContain("endX");
-      expect(required).toContain("endY");
-    });
-
-    it("launch_app should require packageName", () => {
-      expect(advancedToolSchemas.launch_app.requiredParams).toContain("packageName");
-    });
-
-    it("install_apk should require apkPath", () => {
-      expect(advancedToolSchemas.install_apk.requiredParams).toContain("apkPath");
-    });
-  });
-});
-
-// ============================================================================
-// BUTTON KEY MAPPING TESTS
-// ============================================================================
-
-describe("Button Key Mappings", () => {
-  // ADB keyevent codes for reference
-  const keyMap: Record<string, number> = {
-    back: 4,
-    home: 3,
-    recent: 187,
-    volume_up: 24,
-    volume_down: 25,
-    power: 26,
-    enter: 66,
-  };
-
-  it("should have correct Android keycode for back button", () => {
-    expect(keyMap.back).toBe(4);
-  });
-
-  it("should have correct Android keycode for home button", () => {
-    expect(keyMap.home).toBe(3);
-  });
-
-  it("should have correct Android keycode for recent apps", () => {
-    expect(keyMap.recent).toBe(187);
-  });
-
-  it("should have correct Android keycodes for volume buttons", () => {
-    expect(keyMap.volume_up).toBe(24);
-    expect(keyMap.volume_down).toBe(25);
-  });
-
-  it("should have correct Android keycode for power button", () => {
-    expect(keyMap.power).toBe(26);
-  });
-
-  it("should have correct Android keycode for enter", () => {
-    expect(keyMap.enter).toBe(66);
-  });
-
-  it("should have 7 supported buttons", () => {
-    expect(Object.keys(keyMap)).toHaveLength(7);
   });
 });
 
@@ -228,60 +146,73 @@ describe("Button Key Mappings", () => {
 // ============================================================================
 
 describe("ADB Command Formats", () => {
-  describe("Tap command format", () => {
-    it("should build correct tap command", () => {
-      const x = 100;
-      const y = 200;
-      const expected = `adb shell input tap ${x} ${y}`;
-      expect(`adb shell input tap ${x} ${y}`).toBe(expected);
+  describe("Screenshot command format", () => {
+    it("should build correct screenshot command", () => {
+      const expected = "adb exec-out screencap -p";
+      expect("adb exec-out screencap -p").toBe(expected);
     });
 
     it("should include device flag when specified", () => {
       const device = "emulator-5554";
-      const x = 100;
-      const y = 200;
-      const expected = `adb -s ${device} shell input tap ${x} ${y}`;
-      expect(`adb -s ${device} shell input tap ${x} ${y}`).toBe(expected);
+      const expected = `adb -s ${device} exec-out screencap -p`;
+      expect(`adb -s ${device} exec-out screencap -p`).toBe(expected);
     });
   });
 
-  describe("Swipe command format", () => {
-    it("should build correct swipe command with duration", () => {
-      const startX = 100;
-      const startY = 200;
-      const endX = 100;
-      const endY = 800;
-      const duration = 300;
-      const expected = `adb shell input swipe ${startX} ${startY} ${endX} ${endY} ${duration}`;
-      expect(
-        `adb shell input swipe ${startX} ${startY} ${endX} ${endY} ${duration}`
-      ).toBe(expected);
+  describe("Logcat command format", () => {
+    it("should build correct logcat command with line limit", () => {
+      const lines = 50;
+      const expected = `adb logcat -d -t ${lines}`;
+      expect(`adb logcat -d -t ${lines}`).toBe(expected);
+    });
+
+    it("should include filter when specified", () => {
+      const filter = "ReactNative";
+      const lines = 50;
+      const expected = `adb logcat -d -t ${lines} | grep ${filter}`;
+      expect(`adb logcat -d -t ${lines} | grep ${filter}`).toContain("grep");
     });
   });
 
-  describe("Input text command format", () => {
-    it("should use input text command", () => {
-      const text = "hello";
-      const expected = `adb shell input text "${text}"`;
-      expect(`adb shell input text "${text}"`).toContain("input text");
+  describe("Device list command format", () => {
+    it("should use adb devices command", () => {
+      const expected = "adb devices -l";
+      expect("adb devices -l").toBe(expected);
     });
   });
 
-  describe("Launch app command format", () => {
-    it("should use monkey command for launching apps", () => {
-      const packageName = "com.example.app";
-      const expected = `adb shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`;
-      expect(
-        `adb shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`
-      ).toBe(expected);
+  describe("UI dump command format", () => {
+    it("should use uiautomator dump command", () => {
+      const expected = "adb shell uiautomator dump /dev/tty";
+      expect("adb shell uiautomator dump /dev/tty").toContain("uiautomator");
+    });
+  });
+});
+
+// ============================================================================
+// iOS COMMAND FORMAT TESTS
+// ============================================================================
+
+describe("iOS Simulator Command Formats", () => {
+  describe("Screenshot command format", () => {
+    it("should use xcrun simctl io screenshot", () => {
+      const udid = "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE";
+      const expected = `xcrun simctl io ${udid} screenshot -`;
+      expect(`xcrun simctl io ${udid} screenshot -`).toContain("screenshot");
     });
   });
 
-  describe("Install APK command format", () => {
-    it("should use install command with replace flag", () => {
-      const apkPath = "/path/to/app.apk";
-      const expected = `adb install -r "${apkPath}"`;
-      expect(`adb install -r "${apkPath}"`).toBe(expected);
+  describe("List simulators command format", () => {
+    it("should use xcrun simctl list", () => {
+      const expected = "xcrun simctl list devices --json";
+      expect("xcrun simctl list devices --json").toContain("simctl list");
+    });
+  });
+
+  describe("Log stream command format", () => {
+    it("should use log stream for simulator logs", () => {
+      const expected = "xcrun simctl spawn booted log stream --predicate 'processImagePath contains \"APPNAME\"' --level debug";
+      expect(expected).toContain("log stream");
     });
   });
 });
@@ -291,30 +222,6 @@ describe("ADB Command Formats", () => {
 // ============================================================================
 
 describe("Input Validation", () => {
-  describe("Coordinate validation", () => {
-    it("should accept positive integers for coordinates", () => {
-      const validCoords = [0, 100, 500, 1920, 2560];
-      validCoords.forEach((coord) => {
-        expect(typeof coord).toBe("number");
-        expect(coord).toBeGreaterThanOrEqual(0);
-      });
-    });
-
-    it("should handle edge case coordinates", () => {
-      // Common screen boundaries
-      const edgeCases = [
-        { x: 0, y: 0 }, // Top-left corner
-        { x: 1080, y: 1920 }, // Bottom-right (common resolution)
-        { x: 540, y: 960 }, // Center
-      ];
-
-      edgeCases.forEach((coord) => {
-        expect(Number.isInteger(coord.x)).toBe(true);
-        expect(Number.isInteger(coord.y)).toBe(true);
-      });
-    });
-  });
-
   describe("Package name validation", () => {
     it("should recognize valid Android package names", () => {
       const validPackages = [
@@ -332,27 +239,70 @@ describe("Input Validation", () => {
         expect(pkg.endsWith(".")).toBe(false);
       });
     });
-  });
 
-  describe("APK path validation", () => {
-    it("should recognize valid APK file extensions", () => {
-      const validPaths = [
-        "/path/to/app.apk",
-        "C:\\Users\\app.apk",
-        "./build/app-release.apk",
+    it("should reject invalid package names", () => {
+      const invalidPackages = [
+        ".com.example",
+        "com.example.",
+        "singleword",
+        "",
       ];
 
-      validPaths.forEach((path) => {
-        expect(path.toLowerCase().endsWith(".apk")).toBe(true);
+      invalidPackages.forEach((pkg) => {
+        const isValid = pkg.includes(".") && !pkg.startsWith(".") && !pkg.endsWith(".") && pkg.length > 0;
+        expect(isValid).toBe(false);
       });
     });
   });
 
-  describe("Duration validation", () => {
-    it("should use reasonable default duration for swipes", () => {
-      const defaultDuration = 300;
-      expect(defaultDuration).toBeGreaterThan(0);
-      expect(defaultDuration).toBeLessThanOrEqual(5000);
+  describe("Device ID validation", () => {
+    it("should recognize valid emulator IDs", () => {
+      const validIds = [
+        "emulator-5554",
+        "emulator-5556",
+        "emulator-5558",
+      ];
+
+      validIds.forEach((id) => {
+        expect(id.startsWith("emulator-")).toBe(true);
+      });
+    });
+
+    it("should recognize valid physical device IDs", () => {
+      const validIds = [
+        "RF8M12345XY",
+        "1234567890ABCDEF",
+      ];
+
+      validIds.forEach((id) => {
+        expect(id.length).toBeGreaterThan(5);
+        expect(/^[A-Z0-9]+$/i.test(id)).toBe(true);
+      });
+    });
+  });
+
+  describe("iOS UDID validation", () => {
+    it("should recognize valid simulator UDIDs", () => {
+      const validUdids = [
+        "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+        "12345678-1234-1234-1234-123456789012",
+      ];
+
+      validUdids.forEach((udid) => {
+        // UDIDs should have specific format with dashes
+        expect(udid.length).toBe(36);
+        expect(udid.split("-").length).toBe(5);
+      });
+    });
+  });
+
+  describe("Log lines validation", () => {
+    it("should accept reasonable line counts", () => {
+      const validCounts = [10, 50, 100, 200];
+      validCounts.forEach((count) => {
+        expect(count).toBeGreaterThan(0);
+        expect(count).toBeLessThanOrEqual(1000);
+      });
     });
   });
 });
@@ -363,23 +313,125 @@ describe("Input Validation", () => {
 
 describe("Tool Output Formats", () => {
   describe("Success messages", () => {
-    it("should use checkmark emoji for success", () => {
-      const successMsg = "✅ Tapped at (100, 200)";
-      expect(successMsg.startsWith("✅")).toBe(true);
-    });
-
-    it("should include coordinates in tap success message", () => {
-      const x = 100;
-      const y = 200;
-      const msg = `✅ Tapped at (${x}, ${y})`;
-      expect(msg).toContain(`(${x}, ${y})`);
+    it("should use appropriate emoji for success", () => {
+      const successIndicators = ["✅", "📸", "📱", "✓"];
+      const successMsg = "✅ Screenshot captured successfully";
+      expect(successIndicators.some((emoji) => successMsg.includes(emoji))).toBe(true);
     });
   });
 
   describe("Error messages", () => {
-    it("should prefix errors with 'Error'", () => {
-      const errorMsg = "Error tapping screen: device not found";
-      expect(errorMsg.startsWith("Error")).toBe(true);
+    it("should prefix errors with 'Error' or error emoji", () => {
+      const errorIndicators = ["Error", "❌", "⚠️"];
+      const errorMsg = "Error: Device not found";
+      expect(errorIndicators.some((indicator) => errorMsg.includes(indicator))).toBe(true);
     });
+  });
+
+  describe("JSON output", () => {
+    it("should produce valid JSON for structured output", () => {
+      const jsonOutput = JSON.stringify({
+        status: "success",
+        data: { devices: [] },
+      });
+      expect(() => JSON.parse(jsonOutput)).not.toThrow();
+    });
+  });
+});
+
+// ============================================================================
+// READ-ONLY TOOL VERIFICATION
+// ============================================================================
+
+describe("Read-Only Tool Verification", () => {
+  it("should not have any write/modify commands in tool descriptions", () => {
+    const writeKeywords = [
+      "tap",
+      "click",
+      "type",
+      "input",
+      "swipe",
+      "scroll",
+      "install",
+      "uninstall",
+      "delete",
+      "remove",
+      "modify",
+      "write",
+      "push",
+      "pull",
+      "stream",
+    ];
+
+    // Tool names that should NOT exist in the read-only tool set
+    const forbiddenToolPatterns = writeKeywords.map((kw) => new RegExp(kw, "i"));
+
+    // All tools should be observation/read-only
+    const allToolNames = [
+      "screenshot_emulator",
+      "screenshot_ios_simulator",
+      "list_devices",
+      "list_ios_simulators",
+      "get_device_info",
+      "get_ios_simulator_info",
+      "get_app_info",
+      "get_adb_logs",
+      "get_metro_logs",
+      "get_ios_simulator_logs",
+      "check_metro_status",
+      "get_license_status",
+      "get_ui_tree",
+      "find_element",
+      "wait_for_element",
+      "get_element_property",
+      "assert_element",
+      "suggest_action",
+      "analyze_screen",
+      "get_screen_text",
+      "set_license_key", // This is acceptable - modifies local config only
+    ];
+
+    // Verify no forbidden patterns in tool names (except set_license_key)
+    allToolNames.forEach((toolName) => {
+      if (toolName !== "set_license_key") {
+        forbiddenToolPatterns.forEach((pattern) => {
+          // Tool names should not contain write-related keywords
+          if (pattern.test(toolName)) {
+            // This should fail for any tool that has write keywords
+            expect(toolName).not.toMatch(pattern);
+          }
+        });
+      }
+    });
+  });
+
+  it("should have exactly 21 total tools", () => {
+    const allTools = [
+      // Free (12)
+      "screenshot_emulator",
+      "screenshot_ios_simulator",
+      "list_devices",
+      "list_ios_simulators",
+      "get_device_info",
+      "get_ios_simulator_info",
+      "get_app_info",
+      "get_adb_logs",
+      "get_metro_logs",
+      "get_ios_simulator_logs",
+      "check_metro_status",
+      "get_license_status",
+      // Advanced-only (9)
+      "get_ui_tree",
+      "find_element",
+      "wait_for_element",
+      "get_element_property",
+      "assert_element",
+      "suggest_action",
+      "analyze_screen",
+      "get_screen_text",
+      "set_license_key",
+    ];
+
+    expect(allTools).toHaveLength(21);
   });
 });

@@ -11,4 +11,10 @@ export default defineConfig({
       exclude: ["node_modules/", "dist/"],
     },
   },
+  resolve: {
+    alias: {
+      "./license.js": "./license.ts",
+      "./index.js": "./index.ts",
+    },
+  },
 });

@@ -2,17 +2,27 @@
 
 This project uses a dual-license model ("Open Core"):
 
-## Basic Tools (17 tools) - MIT License
+## Core Tools (17 tools) - MIT License
 
-The **17 core tools** in the Basic tier are licensed under the **MIT License**.
+The **17 core tools** (Basic+ tier: Android + iOS) are licensed under the **MIT License**.
 See [LICENSE-MIT](LICENSE-MIT) for the full text.
 
-These tools are free to use, modify, and distribute:
+These tools are open source - free to use, modify, and distribute:
+
+**Android (11 tools - Basic tier $9/mo):**
 - get_metro_logs, get_adb_logs, screenshot_emulator, list_devices
 - check_metro_status, get_app_info, clear_app_data, restart_adb
 - get_device_info, start_metro_logging, stop_metro_logging
+
+**iOS (4 tools - Basic+ tier $12/mo):**
 - list_ios_simulators, screenshot_ios_simulator, get_ios_simulator_logs
-- get_ios_simulator_info, get_license_status, set_license_key
+- get_ios_simulator_info
+
+**License (2 tools - all tiers):**
+- get_license_status, set_license_key
+
+Note: MIT license means the code is open source. A subscription is still required
+to use the tools after the 50-request trial period.
 
 ## Advanced Tools (39 tools) - Elastic License 2.0
 

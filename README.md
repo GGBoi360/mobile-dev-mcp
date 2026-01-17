@@ -6,7 +6,7 @@
 
 An MCP (Model Context Protocol) server that gives Claude real-time access to mobile development tools. Stop copy-pasting logs and screenshots - let Claude see your app directly!
 
-**Open Core**: 17 core tools are MIT licensed (free forever). 39 advanced tools are source-available under Elastic License 2.0.
+**Open Core**: 20 core tools (Basic+ tier) are MIT licensed. 49 advanced tools are source-available under Elastic License 2.0. Free 50-request trial, then subscription required.
 
 ## Features
 
@@ -19,14 +19,17 @@ An MCP (Model Context Protocol) server that gives Claude real-time access to mob
 - **React DevTools Integration** - Inspect React component trees, props, and state
 - **Expo DevTools Integration** - Check Expo server status, manage config, trigger reloads, EAS builds
 - **Performance Metrics** - CPU, memory, FPS, and battery monitoring for your app
+- **UI Element Detection** - Tap elements by text/ID instead of guessing coordinates
 
 ## Pricing
 
 | Tier | Price | Features |
 |------|-------|----------|
-| **TRIAL** | Free (50 requests) | Try all 56 tools, then purchase to continue |
-| **BASIC** | $6/month | 17 core tools (Android + iOS basics), 50 log lines max, 1 device |
-| **ADVANCED** | $8/week, $12/month, or $99/year | All 56 tools, unlimited logs, 3 devices, streaming, DevTools, network, Expo, performance |
+| **TRIAL** | Free (50 requests) | Try all 77 tools, then purchase to continue |
+| **BASIC** | $9/month | Android only (16 tools), 50 log lines max, 1 device |
+| **BASIC+** | $12/month | Android + iOS (20 tools), 50 log lines max, 1 device |
+| **ADVANCED** | $10/week, $18/month, or $149/year | 69 tools, unlimited logs, 3 devices, streaming, DevTools, network, Expo, performance, UI automation |
+| **PRO** | $75/month | All 77 tools, **screen streaming** (watch your app live!), 5 devices, 10-30 FPS with fast streaming, visual tap for games/WebViews |
 
 Purchase at: https://mobile-dev-mcp.com
 
@@ -94,6 +97,9 @@ claude mcp add mobile-dev -- node /path/to/mobile-dev-mcp/dist/index.js
 | `get_device_info` | Get detailed device information |
 | `start_metro_logging` | Start capturing Metro logs in background |
 | `stop_metro_logging` | Stop Metro log capture |
+| `force_reload_app` | Force reload the React Native app (Android + iOS) |
+| `clear_metro_cache` | Clear Metro bundler cache |
+| `restart_metro_server` | Kill and restart Metro server |
 
 ### Core Tools - iOS Simulator (All Tiers, macOS only)
 
@@ -179,6 +185,39 @@ claude mcp add mobile-dev -- node /path/to/mobile-dev-mcp/dist/index.js
 | `get_fps_stats` | Get frame rendering stats (jank frames, percentiles) |
 | `get_battery_stats` | Get battery consumption by app |
 | `get_performance_snapshot` | Get all metrics at once for quick profiling |
+
+### Advanced Tools - UI Element Detection (Advanced Tier Only)
+
+| Tool | Description |
+|------|-------------|
+| `get_ui_tree` | Get the full UI hierarchy with element details (text, IDs, bounds) |
+| `tap_element` | Tap on an element by text, resourceId, contentDescription, or className |
+| `find_element` | Find elements matching criteria without tapping |
+| `wait_for_element` | Wait for an element to appear (with configurable timeout) |
+| `scroll_to_element` | Scroll until an element becomes visible |
+
+### Advanced Tools - Enhanced Interactions (Advanced Tier Only)
+
+| Tool | Description |
+|------|-------------|
+| `long_press_element` | Long press (hold) an element for context menus or drag initiation |
+| `drag_element` | Drag an element to another element (reordering, sliders) |
+| `input_to_element` | Find an input field and enter text directly (with optional clear) |
+| `get_element_property` | Get specific property of an element (enabled, checked, focused, etc.) |
+| `assert_element` | Verify element exists or has expected state (for testing/validation) |
+
+### Pro Tools - Screen Streaming (Pro Tier Only, $75/mo)
+
+| Tool | Description |
+|------|-------------|
+| `start_screen_stream` | Start real-time screen streaming (1-10 FPS) |
+| `stop_screen_stream` | Stop screen streaming |
+| `get_stream_frames` | Get captured frames from the stream buffer |
+| `get_stream_status` | Check if streaming is active and buffer status |
+| `clear_stream_buffer` | Clear all frames from the stream buffer |
+| `start_fast_stream` | Start high-performance streaming (10-30 FPS) with quality presets |
+| `get_live_frame` | Get the latest frame instantly (from buffer or one-time capture) |
+| `tap_visual` | Tap element using visual recognition (for games, WebViews, canvas) |
 
 ## Usage Examples
 
