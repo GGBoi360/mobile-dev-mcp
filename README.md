@@ -1,37 +1,29 @@
-# Claude Mobile Dev MCP
+# Mobile Dev MCP
 
 [![npm version](https://img.shields.io/npm/v/@ggboi360/mobile-dev-mcp.svg)](https://www.npmjs.com/package/@ggboi360/mobile-dev-mcp)
 [![License: MIT (Core)](https://img.shields.io/badge/License-MIT%20(Core)-green.svg)](LICENSE-MIT)
 [![License: Elastic 2.0 (Advanced)](https://img.shields.io/badge/License-Elastic%202.0%20(Advanced)-blue.svg)](LICENSE-ELASTIC)
 
-An MCP (Model Context Protocol) server that gives Claude real-time access to mobile development tools. Stop copy-pasting logs and screenshots - let Claude see your app directly!
+A **read-only** MCP server that gives Claude direct access to your mobile development environment. Stop copy-pasting logs and screenshots - let Claude see your app directly!
 
-**Open Core**: 20 core tools (Basic+ tier) are MIT licensed. 49 advanced tools are source-available under Elastic License 2.0. Free 50-request trial, then subscription required.
+**Open Core**: 12 free tools are MIT licensed. 9 advanced tools are source-available under Elastic License 2.0.
 
 ## Features
 
-- **Metro Log Streaming** - Claude can read Metro bundler output in real-time
-- **ADB Logcat Integration** - Get React Native logs directly from your device/emulator
-- **iOS Simulator Support** - Screenshots and logs from iOS Simulators (macOS only)
-- **Screenshot Capture** - Claude can see your app's current screen (Android & iOS)
-- **Device Management** - List devices, check status, restart ADB
-- **App Management** - Get app info, clear data for fresh testing
-- **React DevTools Integration** - Inspect React component trees, props, and state
-- **Expo DevTools Integration** - Check Expo server status, manage config, trigger reloads, EAS builds
-- **Performance Metrics** - CPU, memory, FPS, and battery monitoring for your app
-- **UI Element Detection** - Tap elements by text/ID instead of guessing coordinates
+- **Screenshots** - Claude can see your app's current screen (Android & iOS)
+- **Logs** - Metro bundler, ADB logcat, and iOS Simulator logs
+- **Device Info** - List devices, check status, get detailed info
+- **UI Inspection** - Get the full UI hierarchy with element details (Advanced)
+- **Screen Analysis** - Find elements, suggest actions, extract text (Advanced)
 
 ## Pricing
 
-| Tier | Price | Features |
-|------|-------|----------|
-| **TRIAL** | Free (50 requests) | Try all 77 tools, then purchase to continue |
-| **BASIC** | $9/month | Android only (16 tools), 50 log lines max, 1 device |
-| **BASIC+** | $12/month | Android + iOS (20 tools), 50 log lines max, 1 device |
-| **ADVANCED** | $10/week, $18/month, or $149/year | 69 tools, unlimited logs, 3 devices, streaming, DevTools, network, Expo, performance, UI automation |
-| **PRO** | $75/month | All 77 tools, **screen streaming** (watch your app live!), 5 devices, 10-30 FPS with fast streaming, visual tap for games/WebViews |
+| Tier | Price | Tools | Description |
+|------|-------|-------|-------------|
+| **Free** | $0 | 12 | Screenshots, logs, device info for Android & iOS |
+| **Advanced** | $18/month | 21 | + UI inspection, element finding, screen analysis, multi-device |
 
-Purchase at: https://mobile-dev-mcp.com
+**Need automation?** Screen streaming, tapping, typing, and workflows are available in [CodeControl](https://codecontrol.dev).
 
 ## Installation
 
@@ -55,17 +47,10 @@ Or add to your `~/.claude/claude_desktop_config.json`:
 
 ### Option 2: Manual Setup (Development)
 ```bash
-# Clone the repo
 git clone https://github.com/GGBoi360/mobile-dev-mcp.git
 cd mobile-dev-mcp
-
-# Install dependencies
 npm install
-
-# Build
 npm run build
-
-# Add to Claude Code
 claude mcp add mobile-dev -- node /path/to/mobile-dev-mcp/dist/index.js
 ```
 
@@ -75,227 +60,82 @@ claude mcp add mobile-dev -- node /path/to/mobile-dev-mcp/dist/index.js
 - **For Android:**
   - **ADB** (Android Debug Bridge) - Part of Android SDK Platform Tools
   - [Download Platform Tools](https://developer.android.com/tools/releases/platform-tools)
-  - Make sure `adb` is in your PATH
 - **For iOS (macOS only):**
   - **Xcode** with Command Line Tools
   - Run `xcode-select --install` if not installed
 
 ## Available Tools
 
-### Core Tools - Android (All Tiers)
+### Free Tier (12 tools)
 
 | Tool | Description |
 |------|-------------|
-| `get_metro_logs` | Get recent Metro bundler logs with optional filtering |
-| `get_adb_logs` | Get React Native logs from device via ADB logcat |
-| `screenshot_emulator` | Capture screenshot from Android emulator |
+| `screenshot_emulator` | Capture screenshot from Android emulator/device |
+| `screenshot_ios_simulator` | Capture screenshot from iOS Simulator (macOS) |
 | `list_devices` | List connected Android devices/emulators |
+| `list_ios_simulators` | List all available iOS Simulators (macOS) |
+| `get_device_info` | Get detailed Android device information |
+| `get_ios_simulator_info` | Get detailed iOS Simulator information (macOS) |
+| `get_app_info` | Get info about an installed Android app |
+| `get_adb_logs` | Get React Native logs from device via ADB logcat |
+| `get_metro_logs` | Get recent Metro bundler logs |
+| `get_ios_simulator_logs` | Get logs from iOS Simulator (macOS) |
 | `check_metro_status` | Check if Metro bundler is running |
-| `get_app_info` | Get info about an installed app |
-| `clear_app_data` | Clear app data for fresh testing |
-| `restart_adb` | Restart ADB server when it gets stuck |
-| `get_device_info` | Get detailed device information |
-| `start_metro_logging` | Start capturing Metro logs in background |
-| `stop_metro_logging` | Stop Metro log capture |
-| `force_reload_app` | Force reload the React Native app (Android + iOS) |
-| `clear_metro_cache` | Clear Metro bundler cache |
-| `restart_metro_server` | Kill and restart Metro server |
-
-### Core Tools - iOS Simulator (All Tiers, macOS only)
-
-| Tool | Description |
-|------|-------------|
-| `list_ios_simulators` | List all available iOS Simulators |
-| `screenshot_ios_simulator` | Capture screenshot from iOS Simulator |
-| `get_ios_simulator_logs` | Get logs from iOS Simulator |
-| `get_ios_simulator_info` | Get detailed simulator information |
-
-### License Tools (All Tiers)
-
-| Tool | Description |
-|------|-------------|
 | `get_license_status` | Check your current license tier and limits |
+
+### Advanced Tier (+9 tools = 21 total) - $18/month
+
+| Tool | Description |
+|------|-------------|
+| `get_ui_tree` | Get the full UI hierarchy with element details |
+| `find_element` | Find elements by text, resourceId, or contentDescription |
+| `wait_for_element` | Wait for an element to appear (with configurable timeout) |
+| `get_element_property` | Get specific property of an element |
+| `assert_element` | Verify element exists or has expected state |
+| `suggest_action` | Get AI-suggested actions based on current screen state |
+| `analyze_screen` | Analyze current screen content and layout |
+| `get_screen_text` | Extract all visible text from current screen |
 | `set_license_key` | Activate a license key to unlock paid features |
 
-### Advanced Tools - Android (Advanced Tier Only)
+### Tier Limits
 
-| Tool | Description |
-|------|-------------|
-| `stream_adb_realtime` | Start real-time ADB log streaming in background |
-| `stop_adb_streaming` | Stop real-time ADB log streaming |
-| `screenshot_history` | Get previously captured screenshots (stores up to 20) |
-| `watch_for_errors` | Monitor logs for specific error patterns |
-| `multi_device_logs` | Get logs from multiple devices simultaneously |
-| `tap_screen` | Tap on the screen at specific coordinates |
-| `input_text` | Type text into the currently focused input field |
-| `press_button` | Press hardware buttons (back, home, recent, volume, power) |
-| `swipe_screen` | Swipe/scroll on the screen |
-| `launch_app` | Launch an app by package name |
-| `install_apk` | Install an APK file to the device |
-
-### Advanced Tools - iOS Simulator (Advanced Tier Only, macOS)
-
-| Tool | Description |
-|------|-------------|
-| `boot_ios_simulator` | Boot an iOS Simulator by UDID or name |
-| `shutdown_ios_simulator` | Shutdown an iOS Simulator (or all) |
-| `install_ios_app` | Install an app (.app bundle) on simulator |
-| `launch_ios_app` | Launch an app by bundle identifier |
-| `terminate_ios_app` | Force quit an app on simulator |
-| `ios_open_url` | Open a URL (deep links, universal links) |
-| `ios_push_notification` | Send a push notification to simulator |
-| `ios_set_location` | Set simulated GPS location |
-
-### Advanced Tools - React DevTools (Advanced Tier Only)
-
-| Tool | Description |
-|------|-------------|
-| `setup_react_devtools` | Configure React DevTools connection and port forwarding |
-| `check_devtools_connection` | Check if DevTools is connected to your app |
-| `get_react_component_tree` | Get the React component hierarchy |
-| `inspect_react_component` | Inspect a component's props, state, and hooks |
-| `search_react_components` | Search for components by name |
-
-### Advanced Tools - Network Inspection (Advanced Tier Only)
-
-| Tool | Description |
-|------|-------------|
-| `get_network_requests` | Get recent HTTP/HTTPS requests from app logs |
-| `start_network_monitoring` | Start real-time network request capture |
-| `stop_network_monitoring` | Stop monitoring and get summary |
-| `get_network_stats` | Get device network statistics (WiFi, data usage) |
-| `analyze_request` | Analyze a specific captured request in detail |
-
-### Advanced Tools - Expo DevTools (Advanced Tier Only)
-
-| Tool | Description |
-|------|-------------|
-| `check_expo_status` | Check Expo dev server status and connected devices |
-| `get_expo_config` | Get Expo project configuration (app.json/app.config.js) |
-| `expo_dev_menu` | Open the Expo developer menu on device |
-| `expo_reload` | Trigger a reload of the Expo app |
-| `get_eas_builds` | Get recent EAS build status and download links |
-
-### Advanced Tools - Performance Metrics (Advanced Tier Only)
-
-| Tool | Description |
-|------|-------------|
-| `get_cpu_usage` | Get CPU usage for device or specific app |
-| `get_memory_usage` | Get memory usage (heap, native, PSS) for an app |
-| `get_fps_stats` | Get frame rendering stats (jank frames, percentiles) |
-| `get_battery_stats` | Get battery consumption by app |
-| `get_performance_snapshot` | Get all metrics at once for quick profiling |
-
-### Advanced Tools - UI Element Detection (Advanced Tier Only)
-
-| Tool | Description |
-|------|-------------|
-| `get_ui_tree` | Get the full UI hierarchy with element details (text, IDs, bounds) |
-| `tap_element` | Tap on an element by text, resourceId, contentDescription, or className |
-| `find_element` | Find elements matching criteria without tapping |
-| `wait_for_element` | Wait for an element to appear (with configurable timeout) |
-| `scroll_to_element` | Scroll until an element becomes visible |
-
-### Advanced Tools - Enhanced Interactions (Advanced Tier Only)
-
-| Tool | Description |
-|------|-------------|
-| `long_press_element` | Long press (hold) an element for context menus or drag initiation |
-| `drag_element` | Drag an element to another element (reordering, sliders) |
-| `input_to_element` | Find an input field and enter text directly (with optional clear) |
-| `get_element_property` | Get specific property of an element (enabled, checked, focused, etc.) |
-| `assert_element` | Verify element exists or has expected state (for testing/validation) |
-
-### Pro Tools - Screen Streaming (Pro Tier Only, $75/mo)
-
-| Tool | Description |
-|------|-------------|
-| `start_screen_stream` | Start real-time screen streaming (1-10 FPS) |
-| `stop_screen_stream` | Stop screen streaming |
-| `get_stream_frames` | Get captured frames from the stream buffer |
-| `get_stream_status` | Check if streaming is active and buffer status |
-| `clear_stream_buffer` | Clear all frames from the stream buffer |
-| `start_fast_stream` | Start high-performance streaming (10-30 FPS) with quality presets |
-| `get_live_frame` | Get the latest frame instantly (from buffer or one-time capture) |
-| `tap_visual` | Tap element using visual recognition (for games, WebViews, canvas) |
+| Feature | Free | Advanced |
+|---------|------|----------|
+| Tools | 12 | 21 |
+| Log lines | 50 | 200 |
+| Devices | 1 | 3 |
 
 ## Usage Examples
-
-Once installed, Claude can use these tools automatically:
-
-**You:** "Check if my Metro bundler is running"
-**Claude:** *Uses check_metro_status tool* "Metro is running on port 8081..."
-
-**You:** "Show me the recent React Native errors"
-**Claude:** *Uses get_adb_logs with filter='E'* "I found 3 errors in the logs..."
 
 **You:** "Take a screenshot of my app"
 **Claude:** *Uses screenshot_emulator* "Here's what your app looks like..." [shows image]
 
-**You:** "What's happening with my app? It crashed"
-**Claude:** *Uses get_adb_logs and screenshot_emulator* "I can see a null pointer exception in the logs, and the screen shows..."
+**You:** "Show me the recent React Native errors"
+**Claude:** *Uses get_adb_logs with level='E'* "I found 3 errors in the logs..."
 
-**You:** "Show me the React component tree"
-**Claude:** *Uses get_react_component_tree* "Here's your component hierarchy: App > Navigator > HomeScreen > ..."
+**You:** "What's on the screen right now?"
+**Claude:** *Uses get_ui_tree* "I can see a login form with email and password fields..."
 
-**You:** "Inspect the UserProfile component"
-**Claude:** *Uses search_react_components and inspect_react_component* "Found UserProfile with props: {userId: '123'}, state: {loading: false, data: {...}}"
-
-**You:** "What API calls is my app making?"
-**Claude:** *Uses get_network_requests* "Found 15 requests: GET /api/users (200), POST /api/login (200), GET /api/feed (500 error)..."
-
-**You:** "Monitor network traffic while I use the app"
-**Claude:** *Uses start_network_monitoring* "Network monitoring started. Make some requests, then I'll summarize them."
-
-**You:** "Is my Expo server running?"
-**Claude:** *Uses check_expo_status* "Expo is running on port 8081. Metro bundler active, 1 device connected."
-
-**You:** "Reload the app"
-**Claude:** *Uses expo_reload* "App reloaded! The JavaScript bundle has been refreshed."
-
-**You:** "Show me my EAS builds"
-**Claude:** *Uses get_eas_builds* "Found 3 recent builds: Android production (complete), iOS staging (in progress)..."
-
-**You:** "Is my app using too much memory?"
-**Claude:** *Uses get_memory_usage* "Your app is using 145 MB (PSS). Java heap: 45 MB, Native: 78 MB. This is within normal range."
-
-**You:** "Check the performance of com.myapp"
-**Claude:** *Uses get_performance_snapshot* "CPU: 12%, Memory: 145 MB, Frames: 2450 rendered, 3% janky. Battery: 85%, temp 32°C"
-
-**You:** "Why is my app laggy?"
-**Claude:** *Uses get_fps_stats* "Found 15% janky frames. 90th percentile frame time is 24ms (should be <16ms). Consider optimizing heavy UI operations."
+**You:** "Find the Submit button"
+**Claude:** *Uses find_element* "Found a clickable button with text 'Submit' at coordinates [540, 1200]"
 
 ## Workflow
 
 1. Start your Metro bundler: `npx expo start` or `npx react-native start`
-2. Start your emulator (Genymotion, Android Studio, etc.)
+2. Start your emulator or connect your device
 3. Start Claude Code with this MCP server installed
 4. Ask Claude about your app - it can now see logs and screenshots!
 
-## Roadmap
-
-- [x] Real-time log streaming (Advanced tier)
-- [x] Screenshot history (Advanced tier)
-- [x] Multi-device support (Advanced tier)
-- [x] Error pattern watching (Advanced tier)
-- [x] iOS Simulator support (screenshots, logs, app management)
-- [x] React DevTools integration (component tree, props, state inspection)
-- [x] Network request inspection (capture, monitor, analyze HTTP traffic)
-- [x] Expo DevTools integration (server status, config, reload, EAS builds)
-- [x] Performance metrics (CPU, memory, FPS, battery monitoring)
-- [ ] Team tier with centralized license management
-
 ## License Activation
 
-1. Purchase a license at https://mobile-dev-mcp.com
+1. Purchase at https://mobiledevmcp.dev/pricing
 2. You'll receive a license key via email
-3. Use the `set_license_key` tool to activate: `set_license_key` with your key
-4. Or add to config file: `~/.mobiledev-mcp/config.json`
+3. Use the `set_license_key` tool to activate
 
 ## Contributing
 
-PRs welcome! Help us make mobile dev with Claude actually usable.
+PRs welcome! This is an open-core project - the 12 free tools are MIT licensed.
 
 ---
 
-Built with frustration and determination by the mobile dev community.
+Built with frustration and determination. [Website](https://mobiledevmcp.dev) | [GitHub](https://github.com/GGBoi360/mobile-dev-mcp)

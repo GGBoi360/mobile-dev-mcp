@@ -9,6 +9,8 @@
   },
   "files": [
     "dist/**/*",
+    "!dist/**/*.test.*",
+    "!dist/orchestration.*",
     "LICENSE",
     "LICENSE-MIT",
     "LICENSE-ELASTIC",
