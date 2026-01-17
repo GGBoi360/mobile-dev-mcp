@@ -456,22 +456,26 @@ async function handleTool(
 
     // === DEVICE INFO ===
     case "list_devices": {
-      const devices = await listConnectedDevices();
-      const maxDevices = getMaxDevices(tier);
+      try {
+        const devices = await listConnectedDevices();
+        const maxDevices = getMaxDevices(tier);
 
-      if (devices.length === 0) {
-        return { content: [{ type: "text", text: "No devices connected. Start an emulator or connect a device." }] };
+        if (devices.length === 0) {
+          return { content: [{ type: "text", text: "No devices connected. Start an emulator or connect a device." }] };
+        }
+
+        const limited = devices.slice(0, maxDevices);
+        let result = `Connected devices (showing ${limited.length}/${devices.length}):\n`;
+        result += limited.map((d) => `  ${d.id} - ${d.status}`).join("\n");
+
+        if (devices.length > maxDevices) {
+          result += `\n\n[Upgrade to ADVANCED to see all ${devices.length} devices]`;
+        }
+
+        return { content: [{ type: "text", text: result }] };
+      } catch (error: any) {
+        return { content: [{ type: "text", text: `Failed to list devices: ${error.message}` }] };
       }
-
-      const limited = devices.slice(0, maxDevices);
-      let result = `Connected devices (showing ${limited.length}/${devices.length}):\n`;
-      result += limited.map((d) => `  ${d.id} - ${d.status}`).join("\n");
-
-      if (devices.length > maxDevices) {
-        result += `\n\n[Upgrade to ADVANCED to see all ${devices.length} devices]`;
-      }
-
-      return { content: [{ type: "text", text: result }] };
     }
 
     case "list_ios_simulators": {
@@ -1072,13 +1076,21 @@ async function handleTool(
 
     // === LICENSE ===
     case "get_license_status": {
-      const status = await getLicenseStatus();
-      return { content: [{ type: "text", text: status }] };
+      try {
+        const status = await getLicenseStatus();
+        return { content: [{ type: "text", text: status }] };
+      } catch (error: any) {
+        return { content: [{ type: "text", text: `Failed to get license status: ${error.message}` }] };
+      }
     }
 
     case "set_license_key": {
-      const result = await setLicenseKey(args.licenseKey as string);
-      return { content: [{ type: "text", text: result }] };
+      try {
+        const result = await setLicenseKey(args.licenseKey as string);
+        return { content: [{ type: "text", text: result }] };
+      } catch (error: any) {
+        return { content: [{ type: "text", text: `Failed to set license key: ${error.message}` }] };
+      }
     }
 
     default:
