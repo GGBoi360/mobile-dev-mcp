@@ -433,8 +433,16 @@ async function handleTool(
     }
 
     case "screenshot_ios_simulator": {
+      // Validate UDID if provided (defense in depth - also validated in captureIosScreenshot)
+      const iosUdid = args.udid as string | undefined;
+      if (iosUdid && !validateUdid(iosUdid)) {
+        return {
+          content: [{ type: "text", text: "Invalid iOS Simulator UDID format. Must be UUID format or 'booted'." }],
+        };
+      }
+
       try {
-        const base64 = await captureIosScreenshot(args.udid as string | undefined);
+        const base64 = await captureIosScreenshot(iosUdid);
         return {
           content: [
             { type: "text", text: "iOS screenshot captured successfully" },
@@ -531,8 +539,16 @@ async function handleTool(
         return { content: [{ type: "text", text: "iOS Simulators only available on macOS" }] };
       }
 
+      // Validate UDID if provided
+      const simUdid = args.udid as string || "booted";
+      if (simUdid !== "booted" && !validateUdid(simUdid)) {
+        return {
+          content: [{ type: "text", text: "Invalid iOS Simulator UDID format. Must be UUID format or 'booted'." }],
+        };
+      }
+
       try {
-        const udid = args.udid as string || "booted";
+        const udid = simUdid;
         const { stdout } = await execAsync(`${XCRUN} simctl list devices --json`);
         const data = JSON.parse(stdout);
 
@@ -579,7 +595,8 @@ async function handleTool(
     case "get_metro_logs": {
       const requestedLines = (args.lines as number) || 50;
       const maxLines = getMaxLogLines(tier);
-      const lines = Math.min(requestedLines, maxLines);
+      // Ensure lines is a positive integer
+      const lines = Math.max(1, Math.min(Math.floor(requestedLines), maxLines));
 
       try {
         const port = CONFIG.metroPort;
@@ -606,7 +623,8 @@ async function handleTool(
     case "get_adb_logs": {
       const requestedLines = (args.lines as number) || 50;
       const maxLines = getMaxLogLines(tier);
-      const lines = Math.min(requestedLines, maxLines);
+      // Ensure lines is a positive integer (security: prevent injection via negative/float values)
+      const lines = Math.max(1, Math.min(Math.floor(requestedLines), maxLines));
       const filter = (args.filter as string) || "ReactNativeJS";
       const level = (args.level as string) || "I";
 
@@ -902,9 +920,14 @@ async function handleTool(
     case "suggest_action": {
       const goal = args.goal as string;
 
+      // Type guard and validation
+      if (!goal || typeof goal !== "string") {
+        return { content: [{ type: "text", text: "Goal parameter is required and must be a string" }] };
+      }
+
       // Validate goal has reasonable length (prevent DoS via long strings)
       const MAX_GOAL_LEN = 1000;
-      if (goal && goal.length > MAX_GOAL_LEN) {
+      if (goal.length > MAX_GOAL_LEN) {
         return { content: [{ type: "text", text: `Goal too long (max ${MAX_GOAL_LEN} chars)` }] };
       }
 
