@@ -34,6 +34,10 @@ coverage/
 
 # Internal planning docs (not for public)
 ROADMAP.md
+docs/IMPROVEMENT_PLAN.md
+
+# CodeControl exclusive code (not for mobile-dev-mcp)
+src/orchestration.ts
 
 # npm pack output
 *.tgz
