@@ -1,7 +1,7 @@
 {
   "name": "@ggboi360/mobile-dev-mcp",
-  "version": "0.2.0",
-  "description": "MCP server for mobile development with Claude - stream Metro logs, capture screenshots, monitor ADB",
+  "version": "0.3.0",
+  "description": "Read-only MCP server for mobile debugging with Claude - screenshots, logs, UI inspection for Android and iOS",
   "type": "module",
   "main": "dist/index.js",
   "bin": {

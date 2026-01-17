@@ -733,6 +733,18 @@ async function handleTool(
     }
 
     case "find_element": {
+      // Validate search parameters have reasonable length (prevent DoS)
+      const MAX_SEARCH_LEN = 500;
+      const searchText = args.text as string | undefined;
+      const searchResourceId = args.resourceId as string | undefined;
+      const searchContentDesc = args.contentDescription as string | undefined;
+
+      if ((searchText && searchText.length > MAX_SEARCH_LEN) ||
+          (searchResourceId && searchResourceId.length > MAX_SEARCH_LEN) ||
+          (searchContentDesc && searchContentDesc.length > MAX_SEARCH_LEN)) {
+        return { content: [{ type: "text", text: "Search parameters too long (max 500 chars)" }] };
+      }
+
       try {
         const { stdout } = await execAsync(
           `${ADB} ${deviceArg} exec-out uiautomator dump /dev/tty`,
@@ -741,9 +753,9 @@ async function handleTool(
 
         const elements = parseUiTree(stdout);
         const found = findElementInTree(elements, {
-          text: args.text as string | undefined,
-          resourceId: args.resourceId as string | undefined,
-          contentDescription: args.contentDescription as string | undefined,
+          text: searchText,
+          resourceId: searchResourceId,
+          contentDescription: searchContentDesc,
         });
 
         if (found) {
@@ -774,9 +786,24 @@ async function handleTool(
     }
 
     case "wait_for_element": {
-      const timeout = (args.timeout as number) || 5000;
+      // Cap timeout at 60 seconds to prevent indefinite blocking
+      const MAX_TIMEOUT = 60000;
+      const requestedTimeout = (args.timeout as number) || 5000;
+      const timeout = Math.max(1000, Math.min(requestedTimeout, MAX_TIMEOUT));
       const pollInterval = 500;
       const startTime = Date.now();
+
+      // Validate search parameters have reasonable length (prevent DoS)
+      const MAX_SEARCH_LEN = 500;
+      const searchText = args.text as string | undefined;
+      const searchResourceId = args.resourceId as string | undefined;
+      const searchContentDesc = args.contentDescription as string | undefined;
+
+      if ((searchText && searchText.length > MAX_SEARCH_LEN) ||
+          (searchResourceId && searchResourceId.length > MAX_SEARCH_LEN) ||
+          (searchContentDesc && searchContentDesc.length > MAX_SEARCH_LEN)) {
+        return { content: [{ type: "text", text: "Search parameters too long (max 500 chars)" }] };
+      }
 
       while (Date.now() - startTime < timeout) {
         try {
@@ -787,9 +814,9 @@ async function handleTool(
 
           const elements = parseUiTree(stdout);
           const found = findElementInTree(elements, {
-            text: args.text as string | undefined,
-            resourceId: args.resourceId as string | undefined,
-            contentDescription: args.contentDescription as string | undefined,
+            text: searchText,
+            resourceId: searchResourceId,
+            contentDescription: searchContentDesc,
           });
 
           if (found) {
@@ -874,6 +901,12 @@ async function handleTool(
     // === SCREEN ANALYSIS (ADVANCED) ===
     case "suggest_action": {
       const goal = args.goal as string;
+
+      // Validate goal has reasonable length (prevent DoS via long strings)
+      const MAX_GOAL_LEN = 1000;
+      if (goal && goal.length > MAX_GOAL_LEN) {
+        return { content: [{ type: "text", text: `Goal too long (max ${MAX_GOAL_LEN} chars)` }] };
+      }
 
       try {
         const { stdout } = await execAsync(

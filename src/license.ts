@@ -136,13 +136,14 @@ function loadCachedLicense(): CachedLicense["data"] | null {
 function saveLicenseCache(data: CachedLicense["data"]): void {
   try {
     if (!fs.existsSync(CONFIG_DIR)) {
-      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+      fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
     }
 
     const signature = signCacheData(data);
     const cache: CachedLicense = { data, signature };
 
-    fs.writeFileSync(LICENSE_CACHE_FILE, JSON.stringify(cache, null, 2));
+    // Write with restricted permissions (owner read/write only)
+    fs.writeFileSync(LICENSE_CACHE_FILE, JSON.stringify(cache, null, 2), { mode: 0o600 });
   } catch {
     // Ignore write errors
   }
@@ -153,10 +154,20 @@ function saveLicenseCache(data: CachedLicense["data"]): void {
 // ============================================================================
 
 export async function checkLicense(): Promise<LicenseInfo> {
-  // Dev mode bypass (environment variable only, for local development)
+  // Dev mode bypass - requires BOTH:
+  // 1. Environment variable MOBILEDEV_DEV_MODE=true
+  // 2. Running from source (not from npm package) - indicated by .dev-mode file in project root
+  // This prevents accidental or malicious activation in production
   if (process.env.MOBILEDEV_DEV_MODE === "true") {
-    console.error("DEV MODE - License checks bypassed");
-    return { tier: "advanced", valid: true };
+    const devMarkerPath = path.join(path.dirname(new URL(import.meta.url).pathname), "..", ".dev-mode");
+    // On Windows, remove leading slash from URL pathname
+    const normalizedPath = process.platform === "win32" ? devMarkerPath.slice(1) : devMarkerPath;
+    if (fs.existsSync(normalizedPath)) {
+      console.error("DEV MODE - License checks bypassed (dev marker found)");
+      return { tier: "advanced", valid: true };
+    }
+    // Log attempt without marker for security awareness
+    console.error("DEV MODE env var set but .dev-mode marker file not found - ignoring");
   }
 
   try {
@@ -217,7 +228,15 @@ async function validateWithLemonSqueezy(licenseKey: string): Promise<LicenseInfo
       },
       (res) => {
         let data = "";
-        res.on("data", (chunk) => (data += chunk));
+        const MAX_RESPONSE_SIZE = 1024 * 1024; // 1MB limit to prevent DoS
+        res.on("data", (chunk) => {
+          data += chunk;
+          // Abort if response is too large (potential DoS)
+          if (data.length > MAX_RESPONSE_SIZE) {
+            req.destroy();
+            resolve(null);
+          }
+        });
         res.on("end", () => {
           try {
             const response = JSON.parse(data);
