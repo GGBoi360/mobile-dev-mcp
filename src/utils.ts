@@ -202,16 +202,47 @@ export interface UiElement {
   centerY?: number;
 }
 
+// Size limits to prevent DoS attacks
+const MAX_XML_SIZE = 10 * 1024 * 1024;  // 10MB max
+const MAX_ELEMENTS = 50000;  // Reasonable limit for UI tree
+
 export function parseUiTree(xmlDump: string): UiElement[] {
+  // Security: Prevent DoS from oversized XML dumps
+  if (xmlDump.length > MAX_XML_SIZE) {
+    throw new Error(`XML dump exceeds maximum size (${MAX_XML_SIZE} bytes)`);
+  }
+
   const elements: UiElement[] = [];
   const nodeRegex = /<node[^>]+>/g;
   let match;
 
+  // Precompiled regex patterns for better performance and security
+  const attrRegexes: Record<string, RegExp> = {
+    "text": /text="([^"]*)"/,
+    "resource-id": /resource-id="([^"]*)"/,
+    "class": /class="([^"]*)"/,
+    "content-desc": /content-desc="([^"]*)"/,
+    "bounds": /bounds="([^"]*)"/,
+    "clickable": /clickable="([^"]*)"/,
+    "enabled": /enabled="([^"]*)"/,
+    "focused": /focused="([^"]*)"/,
+    "selected": /selected="([^"]*)"/,
+    "checked": /checked="([^"]*)"/,
+    "scrollable": /scrollable="([^"]*)"/,
+  };
+
   while ((match = nodeRegex.exec(xmlDump)) !== null) {
+    // Security: Limit element count to prevent memory exhaustion
+    if (elements.length >= MAX_ELEMENTS) {
+      break;
+    }
+
     const node = match[0];
 
     const getText = (attr: string): string => {
-      const attrMatch = node.match(new RegExp(`${attr}="([^"]*)"`));
+      const regex = attrRegexes[attr];
+      if (!regex) return "";
+      const attrMatch = node.match(regex);
       return attrMatch ? attrMatch[1] : "";
     };
 

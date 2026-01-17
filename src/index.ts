@@ -515,9 +515,10 @@ async function handleTool(
         const { stdout: screenSize } = await execAsync(`${ADB} ${deviceArg} shell wm size`);
         result += `  Screen: ${screenSize.trim()}\n`;
 
-        // Memory
-        const { stdout: memInfo } = await execAsync(`${ADB} ${deviceArg} shell cat /proc/meminfo | head -3`);
-        result += `  Memory:\n${memInfo.split("\n").map((l) => `    ${l}`).join("\n")}`;
+        // Memory (avoid shell piping - process in Node.js)
+        const { stdout: memInfo } = await execAsync(`${ADB} ${deviceArg} shell cat /proc/meminfo`);
+        const memLines = memInfo.split("\n").slice(0, 3);  // Limit to first 3 lines in Node.js
+        result += `  Memory:\n${memLines.map((l) => `    ${l}`).join("\n")}`;
 
         return { content: [{ type: "text", text: result }] };
       } catch (error: any) {
@@ -565,8 +566,10 @@ async function handleTool(
       }
 
       try {
-        const { stdout } = await execAsync(`${ADB} ${deviceArg} shell dumpsys package ${packageName} | head -50`);
-        return { content: [{ type: "text", text: stdout }] };
+        // Quote package name and avoid shell piping - process in Node.js
+        const { stdout } = await execAsync(`${ADB} ${deviceArg} shell dumpsys package "${packageName}"`);
+        const outputLines = stdout.split("\n").slice(0, 50).join("\n");  // Limit to 50 lines in Node.js
+        return { content: [{ type: "text", text: outputLines }] };
       } catch (error: any) {
         return { content: [{ type: "text", text: `Failed to get app info: ${error.message}` }] };
       }
@@ -647,15 +650,19 @@ async function handleTool(
 
       const requestedLines = (args.lines as number) || 50;
       const maxLines = getMaxLogLines(tier);
-      const lines = Math.min(requestedLines, maxLines);
+      // Ensure lines is a safe positive integer (security: prevent tail injection)
+      const lines = Math.max(1, Math.min(Math.floor(requestedLines), maxLines));
 
       try {
+        // Avoid shell piping - process in Node.js
         const { stdout } = await execAsync(
-          `log show --predicate 'subsystem CONTAINS "com.apple.CoreSimulator"' --last 5m --style compact | tail -${lines}`,
+          `log show --predicate 'subsystem CONTAINS "com.apple.CoreSimulator"' --last 5m --style compact`,
           { timeout: 10000 }
         );
 
-        return { content: [{ type: "text", text: stdout || "No recent logs found" }] };
+        // Limit output lines in Node.js instead of shell tail
+        const outputLines = stdout.split("\n").slice(-lines).join("\n");
+        return { content: [{ type: "text", text: outputLines || "No recent logs found" }] };
       } catch (error: any) {
         return { content: [{ type: "text", text: `Failed to get iOS logs: ${error.message}` }] };
       }
@@ -663,6 +670,13 @@ async function handleTool(
 
     case "check_metro_status": {
       const port = (args.port as number) || CONFIG.metroPort;
+
+      // Validate port (security: prevent injection via port number)
+      if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        return {
+          content: [{ type: "text", text: "Invalid port number. Port must be between 1 and 65535." }],
+        };
+      }
 
       try {
         const { stdout } = await execAsync(`curl -s http://localhost:${port}/status`, { timeout: 2000 });
