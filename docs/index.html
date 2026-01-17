@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mobile Dev MCP - Let Claude See Your App</title>
-    <meta name="description" content="MCP server for mobile development. Stream logs, capture screenshots, and debug React Native apps with Claude Code.">
+    <meta name="description" content="Read-only MCP server for mobile debugging. Capture screenshots, read logs, inspect UI, and debug React Native apps with Claude Code.">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Mobile Dev MCP - Let Claude See Your App">
@@ -59,11 +59,11 @@
     </style>
 </head>
 <body class="bg-gray-950 text-white">
-    <!-- Beta Banner -->
+    <!-- Banner -->
     <div class="bg-gradient-to-r from-claude to-orange-500 text-white text-center py-3 px-4">
-        <span class="beta-badge inline-flex items-center">
-            <span class="w-2 h-2 bg-white rounded-full mr-2 animate-ping"></span>
-            <strong>FREE TRIAL:</strong>&nbsp;Try all 64 tools free for 50 requests!
+        <span class="inline-flex items-center">
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            <strong>Read-Only Debugging:</strong>&nbsp;12 Free tools | 21 with Advanced ($18/mo)
         </span>
     </div>
 
@@ -184,7 +184,7 @@
     <section class="py-24 bg-gray-950" id="features">
         <div class="container mx-auto px-6">
             <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Everything Claude Needs</h2>
-            <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">64 tools that give Claude direct access to your mobile development environment</p>
+            <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto">21 read-only tools that give Claude direct access to your mobile development environment</p>
 
             <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 <!-- Feature 1 -->
@@ -253,7 +253,7 @@
                         <h3 class="text-xl font-semibold">Advanced</h3>
                         <span class="ml-2 bg-claude/30 text-claude text-xs px-2 py-1 rounded-full">ADVANCED</span>
                     </div>
-                    <p class="text-gray-400">Real-time streaming, screenshot history, multi-device, error watching.</p>
+                    <p class="text-gray-400">UI tree inspection, element finding, screen analysis, multi-device support.</p>
                 </div>
             </div>
         </div>
@@ -301,184 +301,109 @@
     <!-- Pricing Section -->
     <section class="py-24 bg-gray-950" id="pricing">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Simple, Developer-Focused Pricing</h2>
-            <p class="text-gray-400 text-center mb-4">Start with a free trial, upgrade when you need more</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Simple 2-Tier Pricing</h2>
+            <p class="text-gray-400 text-center mb-12">Read-only debugging tools. Start free, upgrade when you need more.</p>
 
-            <!-- Trial Badge -->
-            <div class="text-center mb-12">
-                <span class="inline-flex items-center bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-semibold">
-                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                    Free Trial: 50 requests to try all 64 tools!
-                </span>
-            </div>
+            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto mb-12">
+                <!-- Free -->
+                <div class="bg-gray-800/50 rounded-2xl p-8 border border-gray-700/50">
+                    <h3 class="text-xl font-semibold mb-2">Free</h3>
+                    <p class="text-4xl font-bold mb-1">$0</p>
+                    <p class="text-sm text-gray-400 mb-8">Basic debugging forever</p>
 
-            <div class="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto mb-12">
-                <!-- Basic -->
-                <div class="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
-                    <h3 class="text-lg font-semibold mb-2">Basic</h3>
-                    <p class="text-3xl font-bold mb-1">$9<span class="text-base text-gray-400 font-normal">/mo</span></p>
-                    <p class="text-sm text-gray-400 mb-6">Android only</p>
-
-                    <ul class="space-y-3 mb-6 text-sm">
+                    <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            16 Android tools
+                            <strong>12 tools</strong>
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            50 log lines/request
+                            Screenshots (Android + iOS)
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            1 device
+                            Logs (ADB, Metro, iOS)
                         </li>
-                        <li class="flex items-center text-gray-500">
-                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            No iOS tools
+                            Device info & listing
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-5 h-5 text-green-400 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            50 log lines, 1 device
                         </li>
                     </ul>
 
-                    <a href="#" class="block w-full text-center bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-xl font-medium transition text-sm">
-                        Get Basic
-                    </a>
-                </div>
-
-                <!-- Basic+ -->
-                <div class="bg-gray-800/50 rounded-2xl p-6 border border-blue-500/50">
-                    <h3 class="text-lg font-semibold mb-2">Basic+</h3>
-                    <p class="text-3xl font-bold mb-1">$12<span class="text-base text-gray-400 font-normal">/mo</span></p>
-                    <p class="text-sm text-blue-400 mb-6">Android + iOS</p>
-
-                    <ul class="space-y-3 mb-6 text-sm">
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            20 core tools
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-blue-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            iOS Simulator support
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            50 log lines/request
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            1 device
-                        </li>
-                    </ul>
-
-                    <a href="#" class="block w-full text-center bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl font-medium transition text-sm">
-                        Get Basic+
+                    <a href="#install" class="block w-full text-center bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl font-medium transition">
+                        Install Free
                     </a>
                 </div>
 
                 <!-- Advanced -->
-                <div class="bg-gradient-to-b from-claude/20 to-transparent rounded-2xl p-6 border border-claude/50 relative">
-                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-claude px-3 py-1 rounded-full text-xs font-semibold">
-                        Most Popular
+                <div class="bg-gradient-to-b from-claude/20 to-transparent rounded-2xl p-8 border border-claude/50 relative">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-claude px-4 py-1 rounded-full text-sm font-semibold">
+                        Recommended
                     </div>
 
-                    <h3 class="text-lg font-semibold mb-2">Advanced</h3>
-                    <p class="text-3xl font-bold mb-1">$18<span class="text-base text-gray-400 font-normal">/mo</span></p>
-                    <p class="text-sm text-gray-400 mb-6">$10/week · $149/year</p>
+                    <h3 class="text-xl font-semibold mb-2">Advanced</h3>
+                    <p class="text-4xl font-bold mb-1">$18<span class="text-lg text-gray-400 font-normal">/mo</span></p>
+                    <p class="text-sm text-gray-400 mb-8">Full read-only debugging</p>
 
-                    <ul class="space-y-3 mb-6 text-sm">
+                    <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-claude mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-claude mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            <strong>All 64 tools</strong>
+                            <strong>All 21 tools</strong>
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-claude mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-claude mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Unlimited logs
+                            UI tree inspection
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-claude mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-claude mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            Real-time streaming
+                            Screen analysis & text extraction
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-claude mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-claude mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            3 devices
+                            Element finding & assertions
                         </li>
                         <li class="flex items-center">
-                            <svg class="w-4 h-4 text-claude mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-claude mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            DevTools, Expo, Perf
+                            200 log lines, 3 devices
                         </li>
                     </ul>
 
-                    <a href="#" class="block w-full text-center bg-claude hover:bg-claude-dark px-4 py-2 rounded-xl font-medium transition text-sm">
+                    <a href="https://mobiledevmcp.dev/pricing" class="block w-full text-center bg-claude hover:bg-claude-dark px-6 py-3 rounded-xl font-medium transition">
                         Get Advanced
-                    </a>
-                </div>
-
-                <!-- Team -->
-                <div class="bg-gray-800/50 rounded-2xl p-6 border border-purple-500/50">
-                    <h3 class="text-lg font-semibold mb-2">Team</h3>
-                    <p class="text-3xl font-bold mb-1">$59<span class="text-base text-gray-400 font-normal">/mo</span></p>
-                    <p class="text-sm text-purple-400 mb-6">5 seats included</p>
-
-                    <ul class="space-y-3 mb-6 text-sm">
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-purple-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            All 64 tools
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-purple-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            10 devices
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-purple-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            50 screenshot history
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-purple-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                            Team management
-                        </li>
-                    </ul>
-
-                    <a href="#" class="block w-full text-center bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-xl font-medium transition text-sm">
-                        Get Team
                     </a>
                 </div>
             </div>
 
-            <!-- Feature Comparison Link -->
-            <div class="text-center">
-                <p class="text-gray-500 text-sm">All plans include: Metro logs, ADB logcat, screenshots, device management</p>
+            <!-- Need Automation? -->
+            <div class="max-w-3xl mx-auto text-center p-6 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                <p class="text-gray-400">
+                    <strong class="text-white">Need automation?</strong> Screen streaming, tapping, typing, and workflows are available in
+                    <a href="https://codecontrol.dev" class="text-claude hover:underline">CodeControl</a>.
+                </p>
             </div>
         </div>
     </section>
@@ -496,7 +421,7 @@
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
                     <h3 class="font-semibold mb-2">What about iOS?</h3>
-                    <p class="text-gray-400">Full iOS Simulator support is included! Screenshots, logs, app management, push notifications, and location simulation. Basic+ tier ($12/mo) gets core iOS tools (4 tools), Advanced gets full simulator control (8 additional tools).</p>
+                    <p class="text-gray-400">iOS Simulator support is included in both tiers! The Free tier includes screenshots and logs. Advanced adds UI tree inspection and screen analysis for simulators.</p>
                 </div>
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
@@ -505,13 +430,13 @@
                 </div>
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
-                    <h3 class="font-semibold mb-2">What's the difference between the tiers?</h3>
-                    <p class="text-gray-400"><strong>Basic ($9):</strong> Android-only with 16 core tools. <strong>Basic+ ($12):</strong> Adds iOS Simulator support (20 tools). <strong>Advanced ($18):</strong> All 64 tools including streaming, DevTools, network inspection, Expo integration, and performance metrics. <strong>Team ($59):</strong> 5 seats, 10 devices, 50 screenshot history.</p>
+                    <h3 class="font-semibold mb-2">What's the difference between Free and Advanced?</h3>
+                    <p class="text-gray-400"><strong>Free:</strong> 12 tools for basic debugging - screenshots, logs, device info for both Android and iOS. <strong>Advanced ($18/mo):</strong> All 21 tools including UI tree inspection, element finding, screen analysis, and multi-device support (3 devices, 200 log lines).</p>
                 </div>
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
                     <h3 class="font-semibold mb-2">Can I use this commercially?</h3>
-                    <p class="text-gray-400">Yes! Use it for personal projects or work. Core tools (20) are MIT licensed. Advanced tools (39) are under Elastic License 2.0 - free for personal and commercial use, just can't resell or offer as a hosted service.</p>
+                    <p class="text-gray-400">Yes! Use it for personal projects or work. Free tier tools (12) are MIT licensed. Advanced tools (9) are under Elastic License 2.0 - free for personal and commercial use, just can't resell or offer as a hosted service.</p>
                 </div>
             </div>
         </div>
