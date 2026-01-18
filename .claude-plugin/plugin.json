@@ -1,11 +1,11 @@
 {
   "name": "mobile-dev",
-  "version": "0.1.0",
-  "displayName": "Mobile Dev Tools",
-  "description": "MCP server for mobile development - stream Metro logs, capture emulator screenshots, monitor ADB logcat in real-time",
+  "version": "0.3.0",
+  "displayName": "Mobile Dev MCP",
+  "description": "Read-only MCP server for mobile debugging - screenshots, logs, UI inspection for Android and iOS",
   "author": "GGBoi360",
   "license": "MIT",
-  "repository": "https://github.com/GGBoi360/claude-mobile-dev-mcp",
+  "repository": "https://github.com/GGBoi360/mobile-dev-mcp",
   "keywords": [
     "mobile",
     "react-native",

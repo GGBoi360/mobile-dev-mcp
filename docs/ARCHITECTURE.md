@@ -181,5 +181,6 @@ This design makes it safe to use in any environment while providing powerful deb
 
 ## Links
 
-- **Website**: https://mobiledevmcp.dev
-- **Pricing**: https://mobiledevmcp.dev/pricing
+- **Website**: https://codecontrol.ai/mcp
+- **Pricing**: https://codecontrol.ai/mcp
+- **GitHub**: https://github.com/GGBoi360/mobile-dev-mcp

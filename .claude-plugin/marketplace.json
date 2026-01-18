@@ -13,8 +13,8 @@
   "readme": "../README.md",
   "changelog": "../CHANGELOG.md",
   "support": {
-    "issues": "https://github.com/GGBoi360/claude-mobile-dev-mcp/issues",
-    "discussions": "https://github.com/GGBoi360/claude-mobile-dev-mcp/discussions"
+    "issues": "https://github.com/GGBoi360/mobile-dev-mcp/issues",
+    "discussions": "https://github.com/GGBoi360/mobile-dev-mcp/discussions"
   },
   "compatibility": {
     "platforms": ["windows", "darwin", "linux"],

@@ -375,7 +375,7 @@ const tools: Tool[] = [
       properties: {
         licenseKey: {
           type: "string",
-          description: "Your license key from mobiledevmcp.dev",
+          description: "Your license key from codecontrol.ai/mcp",
         },
       },
       required: ["licenseKey"],
@@ -398,7 +398,7 @@ async function handleTool(
     return {
       content: [{
         type: "text",
-        text: `This tool requires ADVANCED tier ($18/mo). Your tier: ${tier.toUpperCase()}. Upgrade at https://mobiledevmcp.dev/pricing`,
+        text: `This tool requires ADVANCED tier ($18/mo). Your tier: ${tier.toUpperCase()}. Upgrade at https://codecontrol.ai/mcp`,
       }],
     };
   }

@@ -324,7 +324,7 @@ export async function getLicenseStatus(): Promise<string> {
       tools: license.tier === "advanced" ? 21 : 8,
     },
     upgrade: license.tier === "free" ? {
-      url: "https://mobiledevmcp.dev/pricing",
+      url: "https://codecontrol.ai/mcp",
       price: "$18/month",
       features: ["UI inspection", "Screen analysis", "Multi-device support"],
     } : null,

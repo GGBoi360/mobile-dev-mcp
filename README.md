@@ -23,7 +23,7 @@ A **read-only** MCP server that gives Claude direct access to your mobile develo
 | **Free** | $0 | 8 | Android debugging - screenshots, logs, device info |
 | **Advanced** | $18/month | 21 | + iOS support, UI inspection, screen analysis, multi-device |
 
-**Need automation?** Screen streaming, tapping, typing, and workflows are available in [CodeControl](https://codecontrol.dev).
+**Need automation?** Screen streaming, tapping, typing, and workflows are available in [CodeControl](https://codecontrol.ai).
 
 ## Installation
 
@@ -128,7 +128,7 @@ claude mcp add mobile-dev -- node /path/to/mobile-dev-mcp/dist/index.js
 
 ## License Activation
 
-1. Purchase at https://mobiledevmcp.dev/pricing
+1. Purchase at https://codecontrol.ai/mcp
 2. You'll receive a license key via email
 3. Use the `set_license_key` tool to activate
 
@@ -138,4 +138,4 @@ PRs welcome! This is an open-core project - the 8 free tools are MIT licensed.
 
 ---
 
-Built with frustration and determination. [Website](https://mobiledevmcp.dev) | [GitHub](https://github.com/GGBoi360/mobile-dev-mcp)
+Built with frustration and determination. [Website](https://codecontrol.ai/mcp) | [GitHub](https://github.com/GGBoi360/mobile-dev-mcp)
