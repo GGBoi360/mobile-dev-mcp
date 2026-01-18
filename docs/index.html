@@ -245,25 +245,51 @@
                     </a>
                 </div>
 
-                <!-- Quick Demo Teaser -->
-                <div class="terminal rounded-xl overflow-hidden text-left max-w-3xl mx-auto cursor-pointer hover:shadow-2xl transition-shadow" onclick="document.getElementById('demo-section').scrollIntoView({behavior: 'smooth'})">
-                    <div class="flex items-center px-4 py-3 bg-gray-800/50 border-b border-gray-700">
-                        <div class="flex space-x-2">
-                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <!-- Interactive Demo with Play Button -->
+                <div class="terminal rounded-xl overflow-hidden text-left max-w-3xl mx-auto shadow-2xl glow relative">
+                    <div class="flex items-center justify-between px-4 py-3 bg-gray-800/50 border-b border-gray-700">
+                        <div class="flex items-center">
+                            <div class="flex space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <span class="ml-4 text-gray-400 text-sm mono">Claude Code + Mobile Dev MCP</span>
                         </div>
-                        <span class="ml-4 text-gray-400 text-sm mono">Claude Code + Mobile Dev MCP</span>
-                    </div>
-                    <div class="p-6 mono text-sm">
-                        <p class="text-green-400 mb-2">> "My app crashed. What happened?"</p>
-                        <p class="text-gray-400 mb-2">Claude reads your logs, finds the error, fixes it...</p>
-                        <p class="text-claude flex items-center">
-                            <span>See the full demo below</span>
-                            <svg class="w-4 h-4 ml-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                        <button id="heroReplayBtn" class="text-xs text-gray-500 hover:text-claude transition items-center gap-1 hidden">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
-                        </p>
+                            Replay
+                        </button>
+                    </div>
+                    <div id="heroDemo" class="p-6 mono text-sm min-h-[280px] relative">
+                        <!-- Static content shown initially -->
+                        <p class="text-green-400">> You: "My app crashed. What happened?"</p>
+                        <p>&nbsp;</p>
+                        <p class="text-gray-300">> Claude: Let me check your logs...</p>
+                        <p class="text-claude">  [Using get_adb_logs tool]</p>
+                        <p>&nbsp;</p>
+                        <p class="text-gray-400">  Found error in logs:</p>
+                        <p class="text-red-400">  TypeError: Cannot read property 'user' of undefined</p>
+                        <p class="text-red-400">    at HomeScreen.js:42</p>
+                        <p>&nbsp;</p>
+                        <p class="text-gray-300">> Claude: I found the issue! On line 42 of HomeScreen.js,</p>
+                        <p class="text-gray-300">  you're accessing user.name before checking if user exists.</p>
+                        <p>&nbsp;</p>
+                        <p class="text-gray-300">  Let me fix that for you...</p>
+                        <p class="text-claude">  [Editing HomeScreen.js]</p>
+                        <p>&nbsp;</p>
+                        <p class="text-green-400">> Done! Added optional chaining: user?.name</p>
+                    </div>
+                    <!-- Play button overlay -->
+                    <div id="heroPlayOverlay" class="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer transition-opacity hover:bg-black/50" style="top: 44px;">
+                        <button id="heroPlayBtn" class="bg-claude hover:bg-claude-dark text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-3 transition transform hover:scale-105 shadow-lg">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            Watch Demo
+                        </button>
                     </div>
                 </div>
             </div>
@@ -711,40 +737,89 @@
 
         fadeElements.forEach(el => observer.observe(el));
 
-        // Animated terminal demo
-        const demoTerminal = document.getElementById('demoTerminal');
+        // Demo lines shared by both demos
         const demoLines = [
             { text: '> You: "My app crashed. What happened?"', color: 'text-green-400', delay: 0 },
-            { text: '', delay: 800 },
-            { text: '> Claude: Let me check your logs...', color: 'text-gray-300', delay: 1200 },
-            { text: '  [Using get_adb_logs tool]', color: 'text-claude', delay: 1800 },
-            { text: '', delay: 2200 },
-            { text: '  Found error in logs:', color: 'text-gray-400', delay: 2600 },
-            { text: '  TypeError: Cannot read property \'user\' of undefined', color: 'text-red-400', delay: 3000 },
-            { text: '    at HomeScreen.js:42', color: 'text-red-400', delay: 3200 },
-            { text: '', delay: 3600 },
-            { text: '> Claude: I found the issue! On line 42 of HomeScreen.js,', color: 'text-gray-300', delay: 4000 },
-            { text: '  you\'re accessing user.name before checking if user exists.', color: 'text-gray-300', delay: 4400 },
-            { text: '', delay: 4800 },
-            { text: '  Let me fix that for you...', color: 'text-gray-300', delay: 5200 },
-            { text: '  [Editing HomeScreen.js]', color: 'text-claude', delay: 5600 },
-            { text: '', delay: 6000 },
-            { text: '> Done! Added optional chaining: user?.name', color: 'text-green-400', delay: 6400 },
+            { text: '', delay: 600 },
+            { text: '> Claude: Let me check your logs...', color: 'text-gray-300', delay: 1000 },
+            { text: '  [Using get_adb_logs tool]', color: 'text-claude', delay: 1500 },
+            { text: '', delay: 1900 },
+            { text: '  Found error in logs:', color: 'text-gray-400', delay: 2300 },
+            { text: '  TypeError: Cannot read property \'user\' of undefined', color: 'text-red-400', delay: 2700 },
+            { text: '    at HomeScreen.js:42', color: 'text-red-400', delay: 2900 },
+            { text: '', delay: 3200 },
+            { text: '> Claude: I found the issue! On line 42 of HomeScreen.js,', color: 'text-gray-300', delay: 3600 },
+            { text: '  you\'re accessing user.name before checking if user exists.', color: 'text-gray-300', delay: 4000 },
+            { text: '', delay: 4400 },
+            { text: '  Let me fix that for you...', color: 'text-gray-300', delay: 4800 },
+            { text: '  [Editing HomeScreen.js]', color: 'text-claude', delay: 5200 },
+            { text: '', delay: 5600 },
+            { text: '> Done! Added optional chaining: user?.name', color: 'text-green-400', delay: 6000 },
         ];
 
-        let demoStarted = false;
+        // Hero demo (play button)
+        const heroDemo = document.getElementById('heroDemo');
+        const heroPlayOverlay = document.getElementById('heroPlayOverlay');
+        const heroPlayBtn = document.getElementById('heroPlayBtn');
+        const heroReplayBtn = document.getElementById('heroReplayBtn');
+        let heroAnimating = false;
 
-        function runDemo() {
-            if (demoStarted) return;
-            demoStarted = true;
-            demoTerminal.innerHTML = '';
+        function runHeroDemo() {
+            if (heroAnimating) return;
+            heroAnimating = true;
 
-            demoLines.forEach((line, index) => {
+            // Hide overlay, clear content
+            heroPlayOverlay.style.opacity = '0';
+            setTimeout(() => {
+                heroPlayOverlay.style.display = 'none';
+            }, 300);
+            heroDemo.innerHTML = '';
+
+            // Animate lines
+            demoLines.forEach((line) => {
                 setTimeout(() => {
                     const p = document.createElement('p');
                     p.className = `${line.color || ''} demo-line`;
                     p.innerHTML = line.text || '&nbsp;';
-                    p.style.animationDelay = '0s';
+                    heroDemo.appendChild(p);
+                }, line.delay);
+            });
+
+            // Show replay button after animation
+            setTimeout(() => {
+                heroReplayBtn.classList.remove('hidden');
+                heroReplayBtn.classList.add('flex');
+                heroAnimating = false;
+            }, 6500);
+        }
+
+        if (heroPlayBtn) {
+            heroPlayBtn.addEventListener('click', runHeroDemo);
+            heroPlayOverlay.addEventListener('click', runHeroDemo);
+        }
+
+        if (heroReplayBtn) {
+            heroReplayBtn.addEventListener('click', () => {
+                heroReplayBtn.classList.add('hidden');
+                heroReplayBtn.classList.remove('flex');
+                runHeroDemo();
+            });
+        }
+
+        // Lower demo section (auto-play on scroll)
+        const demoTerminal = document.getElementById('demoTerminal');
+        let lowerDemoStarted = false;
+
+        function runLowerDemo() {
+            if (lowerDemoStarted) return;
+            lowerDemoStarted = true;
+            demoTerminal.innerHTML = '';
+
+            demoLines.forEach((line) => {
+                setTimeout(() => {
+                    const p = document.createElement('p');
+                    p.className = `${line.color || ''} demo-line`;
+                    p.innerHTML = line.text || '&nbsp;';
                     demoTerminal.appendChild(p);
                     demoTerminal.scrollTop = demoTerminal.scrollHeight;
                 }, line.delay);
@@ -752,21 +827,20 @@
 
             // Reset after animation completes
             setTimeout(() => {
-                demoStarted = false;
+                lowerDemoStarted = false;
             }, 8000);
         }
 
-        // Start demo when section is visible
-        const demoSection = document.querySelector('#demoTerminal');
-        if (demoSection) {
+        // Start lower demo when section is visible
+        if (demoTerminal) {
             const demoObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        runDemo();
+                        runLowerDemo();
                     }
                 });
             }, { threshold: 0.5 });
-            demoObserver.observe(demoSection.parentElement);
+            demoObserver.observe(demoTerminal.parentElement);
         }
     </script>
 </body>
