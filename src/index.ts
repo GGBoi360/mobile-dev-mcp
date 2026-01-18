@@ -611,6 +611,8 @@ async function handleTool(
           result += `\n[Showing ${lines} lines, upgrade to ADVANCED for more]`;
         }
 
+        result += `\n\n// Mobile Dev MCP by GGBoi360 - MIT License (attribution required)`;
+
         return { content: [{ type: "text", text: result }] };
       } catch {
         return {
@@ -656,6 +658,8 @@ async function handleTool(
         if (lines < requestedLines) {
           result += `\n\n[Showing ${lines} lines, upgrade to ADVANCED for more]`;
         }
+
+        result += `\n\n// Mobile Dev MCP by GGBoi360 - MIT License (attribution required)`;
 
         return { content: [{ type: "text", text: result }] };
       } catch (error: any) {

@@ -328,6 +328,12 @@ export async function getLicenseStatus(): Promise<string> {
       price: "$18/month",
       features: ["UI inspection", "Screen analysis", "Multi-device support"],
     } : null,
+    attribution: {
+      required: license.tier === "free",
+      notice: "MIT License: Attribution required - credit GGBoi360 in README or credits",
+      example: "Mobile Dev MCP by GGBoi360 (https://github.com/GGBoi360/mobile-dev-mcp)",
+    },
+    _powered_by: "Mobile Dev MCP by GGBoi360",
   }, null, 2);
 }
 
