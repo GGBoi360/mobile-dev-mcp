@@ -183,6 +183,23 @@
         .copy-btn.copied {
             opacity: 1;
         }
+
+        /* Sticky header */
+        .sticky-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 20, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+        .sticky-nav.visible {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="bg-gray-950 text-white">
@@ -194,9 +211,20 @@
         </span>
     </div>
 
+    <!-- Sticky Nav (appears on scroll) -->
+    <nav id="stickyNav" class="sticky-nav">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <span class="font-semibold">Mobile Dev MCP</span>
+            <div class="flex items-center space-x-4">
+                <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="text-gray-300 hover:text-white transition text-sm">GitHub</a>
+                <a href="#install" class="bg-claude hover:bg-claude-dark px-4 py-2 rounded-lg transition font-medium text-sm">Install</a>
+            </div>
+        </div>
+    </nav>
+
     <!-- Hero Section -->
     <div class="gradient-bg min-h-screen">
-        <nav class="container mx-auto px-6 py-6 flex justify-between items-center">
+        <nav id="mainNav" class="container mx-auto px-6 py-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
                 <span class="font-semibold text-lg">Mobile Dev MCP</span>
 
@@ -222,8 +250,12 @@
             </div>
 
             <!-- Desktop nav -->
-            <div class="desktop-nav flex items-center space-x-6">
-                <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="text-gray-300 hover:text-white transition">GitHub</a>
+            <div class="desktop-nav flex items-center space-x-4">
+                <!-- GitHub Stars Badge -->
+                <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="flex items-center space-x-2 text-gray-300 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    <span class="text-sm">Star</span>
+                </a>
                 <a href="#pricing" class="bg-claude hover:bg-claude-dark px-4 py-2 rounded-lg transition font-medium">Get Started</a>
             </div>
 
@@ -463,44 +495,67 @@
     <section class="py-24 bg-gray-900" id="install">
         <div class="container mx-auto px-6">
             <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Get Started in 30 Seconds</h2>
-            <p class="text-gray-400 text-center mb-12">Works with Claude Code, Cursor, Continue, Cline, Zed, and any MCP-compatible tool</p>
+            <p class="text-gray-400 text-center mb-4">Works with Claude Code, Cursor, Continue, Cline, Zed, and any MCP-compatible tool</p>
+            <p class="text-gray-500 text-center mb-12 text-sm">Requires: Node.js 18+ and ADB (Android SDK Platform Tools)</p>
 
-            <div class="max-w-2xl mx-auto">
+            <div class="max-w-3xl mx-auto grid md:grid-cols-2 gap-6">
+                <!-- Option 1: CLI Command -->
                 <div class="terminal rounded-xl overflow-hidden">
-                    <div class="flex items-center px-4 py-3 bg-gray-800/50 border-b border-gray-700">
-                        <div class="flex space-x-2">
-                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <div class="flex items-center justify-between px-4 py-3 bg-gray-800/50 border-b border-gray-700">
+                        <div class="flex items-center">
+                            <div class="flex space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <span class="ml-4 text-gray-400 text-sm mono">Option 1: CLI</span>
                         </div>
-                        <span class="ml-4 text-gray-400 text-sm mono">Terminal</span>
+                        <span class="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">Recommended</span>
                     </div>
                     <div class="p-6 mono text-sm">
-                        <p class="text-gray-500 mb-2"># Install via npx (recommended)</p>
-                        <div class="copy-wrapper flex items-center justify-between bg-gray-800/50 rounded px-3 py-2 mb-4">
-                            <code id="installCmd" class="text-green-400">claude mcp add mobile-dev -- npx @ggboi360/mobile-dev-mcp</code>
-                            <button id="copyBtn" class="copy-btn ml-3 text-gray-500 hover:text-white transition" title="Copy to clipboard">
+                        <p class="text-gray-500 mb-3"># One command to install</p>
+                        <div class="copy-wrapper flex items-center justify-between bg-gray-800/50 rounded px-3 py-3">
+                            <code id="installCmd" class="text-green-400 text-xs break-all">claude mcp add mobile-dev -- npx @ggboi360/mobile-dev-mcp</code>
+                            <button id="copyBtn" class="copy-btn ml-3 text-gray-500 hover:text-white transition flex-shrink-0" title="Copy to clipboard">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                 </svg>
                             </button>
                         </div>
-
-                        <p class="text-gray-500 mb-2"># Or add to Claude Code config</p>
-                        <p class="text-green-400">{</p>
-                        <p class="text-green-400 pl-4">"mcpServers": {</p>
-                        <p class="text-green-400 pl-8">"mobile-dev": {</p>
-                        <p class="text-green-400 pl-12">"command": "npx",</p>
-                        <p class="text-green-400 pl-12">"args": ["@ggboi360/mobile-dev-mcp"]</p>
-                        <p class="text-green-400 pl-8">}</p>
-                        <p class="text-green-400 pl-4">}</p>
-                        <p class="text-green-400">}</p>
+                        <p class="text-gray-500 mt-4 text-xs">Run this in your terminal, then restart Claude Code.</p>
                     </div>
                 </div>
 
-                <p class="text-center text-gray-400 mt-6">
-                    Requires: Node.js 18+, ADB (Android SDK Platform Tools)
-                </p>
+                <!-- Option 2: JSON Config -->
+                <div class="terminal rounded-xl overflow-hidden">
+                    <div class="flex items-center justify-between px-4 py-3 bg-gray-800/50 border-b border-gray-700">
+                        <div class="flex items-center">
+                            <div class="flex space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <span class="ml-4 text-gray-400 text-sm mono">Option 2: Config</span>
+                        </div>
+                        <button id="copyJsonBtn" class="copy-btn text-gray-500 hover:text-white transition" title="Copy JSON" style="opacity: 1;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="p-6 mono text-sm">
+                        <p class="text-gray-500 mb-3"># Add to claude_desktop_config.json</p>
+                        <pre id="jsonConfig" class="text-green-400 text-xs bg-gray-800/50 rounded p-3 overflow-x-auto">{
+  "mcpServers": {
+    "mobile-dev": {
+      "command": "npx",
+      "args": ["@ggboi360/mobile-dev-mcp"]
+    }
+  }
+}</pre>
+                        <p class="text-gray-500 mt-4 text-xs">Add this to your MCP config file.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -643,7 +698,7 @@
 
                 <div class="bg-gray-800/50 rounded-xl p-6">
                     <h3 class="font-semibold mb-2">Can I use this commercially?</h3>
-                    <p class="text-gray-400">Yes! Use it for personal projects or work. Free tier tools (8) are MIT licensed. Advanced tools (13) are under Elastic License 2.0 - free for personal and commercial use, just can't resell or offer as a hosted service.</p>
+                    <p class="text-gray-400">Yes! Free tier (8 tools) is MIT licensed - use commercially but <strong class="text-white">attribution required</strong> (credit GGBoi360 in your README or credits). Advanced tools (13) are Elastic License 2.0 - commercial use OK, just can't resell as a hosted service.</p>
                 </div>
             </div>
         </div>
@@ -793,6 +848,37 @@
                     }, 2000);
                 } catch (err) {
                     console.error('Copy failed:', err);
+                }
+            });
+        }
+
+        // JSON copy button
+        const copyJsonBtn = document.getElementById('copyJsonBtn');
+        const jsonConfig = document.getElementById('jsonConfig');
+        if (copyJsonBtn && jsonConfig) {
+            copyJsonBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(jsonConfig.textContent);
+                    copyJsonBtn.innerHTML = '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    setTimeout(() => {
+                        copyJsonBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Copy failed:', err);
+                }
+            });
+        }
+
+        // Sticky nav on scroll
+        const stickyNav = document.getElementById('stickyNav');
+        const mainNav = document.getElementById('mainNav');
+        if (stickyNav && mainNav) {
+            const showStickyAt = mainNav.offsetTop + mainNav.offsetHeight + 100;
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > showStickyAt) {
+                    stickyNav.classList.add('visible');
+                } else {
+                    stickyNav.classList.remove('visible');
                 }
             });
         }
