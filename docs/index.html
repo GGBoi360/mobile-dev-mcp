@@ -222,9 +222,9 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <div class="gradient-bg min-h-screen">
-        <nav id="mainNav" class="container mx-auto px-6 py-4 flex justify-between items-center bg-gradient-to-r from-claude/20 to-orange-500/10 rounded-xl mt-4 backdrop-blur-sm border border-white/5">
+    <!-- Main Header -->
+    <nav id="mainNav" class="bg-gradient-to-r from-claude/30 to-orange-500/20 border-b border-claude/20">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-4">
                 <span class="font-semibold text-lg">Mobile Dev MCP</span>
 
@@ -265,21 +265,24 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
-        </nav>
+        </div>
+    </nav>
 
-        <!-- Mobile menu -->
-        <div id="mobileMenu" class="mobile-menu bg-gray-900/95 backdrop-blur-sm border-b border-gray-700">
-            <div class="container mx-auto px-6 py-4 space-y-4">
-                <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="block text-gray-300 hover:text-white transition py-2">GitHub</a>
-                <a href="#pricing" class="block bg-claude hover:bg-claude-dark px-4 py-3 rounded-lg transition font-medium text-center">Get Started</a>
-                <div class="pt-2 border-t border-gray-700">
-                    <p class="text-xs text-gray-500 mb-2">MCP Tools by Gilad</p>
-                    <div class="text-white font-medium">Mobile Dev MCP <span class="text-claude text-xs">← You are here</span></div>
-                    <div class="text-gray-500 text-sm mt-1">Photo Tunnel <span class="text-xs">(Coming Soon)</span></div>
-                </div>
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="mobile-menu bg-gray-900/95 backdrop-blur-sm border-b border-gray-700">
+        <div class="container mx-auto px-6 py-4 space-y-4">
+            <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="block text-gray-300 hover:text-white transition py-2">GitHub</a>
+            <a href="#pricing" class="block bg-claude hover:bg-claude-dark px-4 py-3 rounded-lg transition font-medium text-center">Get Started</a>
+            <div class="pt-2 border-t border-gray-700">
+                <p class="text-xs text-gray-500 mb-2">MCP Tools by Gilad</p>
+                <div class="text-white font-medium">Mobile Dev MCP <span class="text-claude text-xs">← You are here</span></div>
+                <div class="text-gray-500 text-sm mt-1">Photo Tunnel <span class="text-xs">(Coming Soon)</span></div>
             </div>
         </div>
+    </div>
 
+    <!-- Hero Section -->
+    <section class="gradient-bg">
         <div class="container mx-auto px-6 pt-16 pb-32">
             <div class="max-w-4xl mx-auto text-center">
                 <div class="inline-flex items-center bg-white/10 rounded-full px-4 py-2 mb-8">
@@ -330,7 +333,43 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- What is MCP? (Non-dev friendly explainer) -->
+    <section class="py-16 bg-gray-950 border-b border-gray-800">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl p-8 border border-blue-500/20">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <span class="text-2xl mr-3">💡</span>
+                        New to MCP? Here's the deal:
+                    </h2>
+                    <p class="text-gray-300 text-lg leading-relaxed mb-4">
+                        <strong class="text-white">MCP (Model Context Protocol)</strong> lets AI assistants like Claude
+                        connect to tools on your computer. Instead of you copy-pasting logs and screenshots,
+                        Claude can <em>directly see</em> what's happening in your app.
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-4 mt-6">
+                        <div class="text-center p-4">
+                            <div class="text-3xl mb-2">📱</div>
+                            <p class="text-sm text-gray-400">Your phone emulator runs your app</p>
+                        </div>
+                        <div class="text-center p-4">
+                            <div class="text-3xl mb-2">🔌</div>
+                            <p class="text-sm text-gray-400">Mobile Dev MCP connects Claude to your emulator</p>
+                        </div>
+                        <div class="text-center p-4">
+                            <div class="text-3xl mb-2">🤖</div>
+                            <p class="text-sm text-gray-400">Claude sees logs, screenshots, and helps you debug</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-6 text-center">
+                        Works with Claude Code, Cursor, Cline, Zed, and any MCP-compatible IDE. <a href="https://www.anthropic.com/news/model-context-protocol" class="text-claude hover:underline">Learn more about MCP →</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Before/After Section -->
     <section class="py-24 bg-gray-900">
@@ -382,7 +421,20 @@
     <section class="py-24 bg-gray-950" id="features">
         <div class="container mx-auto px-6">
             <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 fade-in">Everything Claude Needs</h2>
-            <p class="text-gray-400 text-center mb-16 max-w-2xl mx-auto fade-in">21 read-only tools that give Claude direct access to your mobile development environment</p>
+            <p class="text-gray-400 text-center mb-6 max-w-2xl mx-auto fade-in">21 read-only tools that give Claude direct access to your mobile development environment</p>
+
+            <!-- Inline FAQ badges -->
+            <div class="flex flex-wrap justify-center gap-3 mb-16 fade-in">
+                <span class="inline-flex items-center bg-green-500/10 text-green-400 px-4 py-2 rounded-full text-sm border border-green-500/20">
+                    <span class="mr-2">✓</span> Works with Expo & React Native
+                </span>
+                <span class="inline-flex items-center bg-blue-500/10 text-blue-400 px-4 py-2 rounded-full text-sm border border-blue-500/20">
+                    <span class="mr-2">✓</span> No Claude Max needed
+                </span>
+                <span class="inline-flex items-center bg-purple-500/10 text-purple-400 px-4 py-2 rounded-full text-sm border border-purple-500/20">
+                    <span class="mr-2">✓</span> Runs 100% locally
+                </span>
+            </div>
 
             <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 <!-- Feature 1 -->
@@ -492,13 +544,16 @@
     </section>
 
     <!-- Install Section -->
-    <section class="py-24 bg-gray-900" id="install">
+    <section class="py-32 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950" id="install">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Get Started in 30 Seconds</h2>
-            <p class="text-gray-400 text-center mb-4">Works with Claude Code, Cursor, Continue, Cline, Zed, and any MCP-compatible tool</p>
-            <p class="text-gray-500 text-center mb-12 text-sm">Requires: Node.js 18+ and ADB (Android SDK Platform Tools)</p>
+            <div class="text-center mb-12">
+                <span class="inline-block bg-claude/20 text-claude px-4 py-2 rounded-full text-sm font-medium mb-6">⚡ Quick Setup</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Get Started in 30 Seconds</h2>
+                <p class="text-xl text-gray-300 mb-4">Works with Claude Code, Cursor, Continue, Cline, Zed, and any MCP-compatible tool</p>
+                <p class="text-gray-500">Requires: Node.js 18+ and ADB (Android SDK Platform Tools)</p>
+            </div>
 
-            <div class="max-w-3xl mx-auto grid md:grid-cols-2 gap-6">
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
                 <!-- Option 1: CLI Command -->
                 <div class="terminal rounded-xl overflow-hidden">
                     <div class="flex items-center justify-between px-4 py-3 bg-gray-800/50 border-b border-gray-700">
@@ -554,6 +609,31 @@
   }
 }</pre>
                         <p class="text-gray-500 mt-4 text-xs">Add this to your MCP config file.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What happens next -->
+            <div class="max-w-4xl mx-auto mt-12 bg-gray-800/30 rounded-2xl p-8 border border-gray-700/30">
+                <h3 class="text-xl font-semibold mb-6 text-center">🎉 Then What?</h3>
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                    <div>
+                        <div class="w-10 h-10 bg-claude/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <span class="text-claude font-bold">1</span>
+                        </div>
+                        <p class="text-gray-300 text-sm">Restart Claude Code (or your MCP client)</p>
+                    </div>
+                    <div>
+                        <div class="w-10 h-10 bg-claude/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <span class="text-claude font-bold">2</span>
+                        </div>
+                        <p class="text-gray-300 text-sm">Start your React Native app in an emulator</p>
+                    </div>
+                    <div>
+                        <div class="w-10 h-10 bg-claude/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <span class="text-claude font-bold">3</span>
+                        </div>
+                        <p class="text-gray-300 text-sm">Ask Claude to check your logs or take a screenshot!</p>
                     </div>
                 </div>
             </div>
@@ -670,35 +750,30 @@
         </div>
     </section>
 
-    <!-- FAQ Section -->
-    <section class="py-24 bg-gray-900">
+    <!-- FAQ Section (Quick Reference) -->
+    <section class="py-16 bg-gray-900">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">FAQ</h2>
+            <h2 class="text-2xl font-bold text-center mb-8">Quick Answers</h2>
 
-            <div class="max-w-3xl mx-auto space-y-6">
-                <div class="bg-gray-800/50 rounded-xl p-6">
-                    <h3 class="font-semibold mb-2">Does this work with Expo?</h3>
-                    <p class="text-gray-400">Yes! Works great with Expo and bare React Native projects. Just make sure Metro is running and you have ADB set up.</p>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-4">
+                <div class="bg-gray-800/30 rounded-xl p-5 border border-gray-700/30">
+                    <h3 class="font-semibold mb-2 text-sm">What about iOS?</h3>
+                    <p class="text-gray-400 text-sm">iOS Simulator support is in Advanced tier ($18/mo) - screenshots, logs, and UI inspection.</p>
                 </div>
 
-                <div class="bg-gray-800/50 rounded-xl p-6">
-                    <h3 class="font-semibold mb-2">What about iOS?</h3>
-                    <p class="text-gray-400">iOS Simulator support is included in the Advanced tier ($18/mo). This includes screenshots, logs, device info, and all the UI inspection tools.</p>
+                <div class="bg-gray-800/30 rounded-xl p-5 border border-gray-700/30">
+                    <h3 class="font-semibold mb-2 text-sm">Free vs Advanced?</h3>
+                    <p class="text-gray-400 text-sm"><strong class="text-gray-300">Free:</strong> 8 Android tools. <strong class="text-gray-300">Advanced:</strong> All 21 tools + iOS + multi-device.</p>
                 </div>
 
-                <div class="bg-gray-800/50 rounded-xl p-6">
-                    <h3 class="font-semibold mb-2">Do I need Claude Max?</h3>
-                    <p class="text-gray-400">No! This works with any Claude Code subscription. The MCP server runs locally on your machine.</p>
+                <div class="bg-gray-800/30 rounded-xl p-5 border border-gray-700/30">
+                    <h3 class="font-semibold mb-2 text-sm">Can I use this commercially?</h3>
+                    <p class="text-gray-400 text-sm">Yes! Free tier is MIT (attribution required). Advanced is Elastic License 2.0.</p>
                 </div>
 
-                <div class="bg-gray-800/50 rounded-xl p-6">
-                    <h3 class="font-semibold mb-2">What's the difference between Free and Advanced?</h3>
-                    <p class="text-gray-400"><strong>Free:</strong> 8 Android tools for basic debugging - screenshots, logs, device info. <strong>Advanced ($18/mo):</strong> All 21 tools including iOS support, UI tree inspection, element finding, screen analysis, and multi-device support (3 devices, 200 log lines).</p>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6">
-                    <h3 class="font-semibold mb-2">Can I use this commercially?</h3>
-                    <p class="text-gray-400">Yes! Free tier (8 tools) is MIT licensed - use commercially but <strong class="text-white">attribution required</strong> (credit GGBoi360 in your README or credits). Advanced tools (13) are Elastic License 2.0 - commercial use OK, just can't resell as a hosted service.</p>
+                <div class="bg-gray-800/30 rounded-xl p-5 border border-gray-700/30">
+                    <h3 class="font-semibold mb-2 text-sm">Is this open source?</h3>
+                    <p class="text-gray-400 text-sm">Free tools are MIT licensed. See <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="text-claude hover:underline">GitHub</a> for source.</p>
                 </div>
             </div>
         </div>
