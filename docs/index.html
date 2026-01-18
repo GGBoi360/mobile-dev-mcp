@@ -56,6 +56,37 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
+
+        /* Dropdown menu */
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        /* Fixed bottom bar */
+        .deeper-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .deeper-bar:hover {
+            background: rgba(0, 0, 0, 0.95);
+            box-shadow: 0 -4px 20px rgba(217, 119, 87, 0.2);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .deeper-bar .arrow {
+            animation: float 2s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="bg-gray-950 text-white">
@@ -70,11 +101,34 @@
     <!-- Hero Section -->
     <div class="gradient-bg min-h-screen">
         <nav class="container mx-auto px-6 py-6 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-claude rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold">M</span>
+            <div class="flex items-center space-x-4">
+                <!-- Logo + Current Page -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-claude rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold">M</span>
+                    </div>
+                    <span class="font-semibold text-lg">Mobile Dev MCP</span>
                 </div>
-                <span class="font-semibold text-lg">Mobile Dev MCP</span>
+
+                <!-- Dropdown: MCP Tools by Gilad -->
+                <div class="dropdown relative">
+                    <button class="flex items-center space-x-1 text-gray-400 hover:text-white text-sm transition">
+                        <span>MCP Tools by Gilad</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu hidden absolute top-full left-0 mt-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden">
+                        <a href="#" class="block px-4 py-3 text-white bg-claude/20 border-l-2 border-claude">
+                            <div class="font-medium">Mobile Dev MCP</div>
+                            <div class="text-xs text-gray-400">Read-only debugging</div>
+                        </a>
+                        <div class="px-4 py-3 text-gray-500 cursor-not-allowed">
+                            <div class="font-medium">Photo Tunnel</div>
+                            <div class="text-xs">Coming Soon</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="flex items-center space-x-6">
                 <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="text-gray-300 hover:text-white transition">GitHub</a>
@@ -443,7 +497,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="py-12 bg-gray-950 border-t border-gray-800">
+    <footer class="py-12 pb-24 bg-gray-950 border-t border-gray-800">
         <div class="container mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="flex items-center space-x-2 mb-4 md:mb-0">
@@ -454,6 +508,7 @@
                 </div>
 
                 <div class="flex items-center space-x-6 text-gray-400">
+                    <a href="https://codecontrol.ai/mcp" class="hover:text-white transition">More Tools</a>
                     <a href="https://github.com/GGBoi360/mobile-dev-mcp" class="hover:text-white transition">GitHub</a>
                     <a href="https://x.com/GiliboiGabay" class="hover:text-white transition">Twitter</a>
                     <a href="mailto:GiladGabay@proton.me" class="hover:text-white transition">Contact</a>
@@ -465,5 +520,13 @@
             </p>
         </div>
     </footer>
+
+    <!-- Fixed Bottom Bar: This gets much deeper... -->
+    <a href="https://codecontrol.ai/mcp" class="deeper-bar py-3 flex items-center justify-center space-x-2 text-gray-400 hover:text-white transition-all cursor-pointer">
+        <span class="text-sm font-medium">This gets much deeper...</span>
+        <svg class="w-4 h-4 arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+        </svg>
+    </a>
 </body>
 </html>
