@@ -191,9 +191,9 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(10, 10, 20, 0.85);
+            background: linear-gradient(90deg, rgba(217, 119, 87, 0.15) 0%, rgba(249, 115, 22, 0.1) 100%);
             backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(217, 119, 87, 0.2);
             transform: translateY(-100%);
             transition: transform 0.3s ease;
         }
@@ -224,7 +224,7 @@
 
     <!-- Hero Section -->
     <div class="gradient-bg min-h-screen">
-        <nav id="mainNav" class="container mx-auto px-6 py-6 flex justify-between items-center">
+        <nav id="mainNav" class="container mx-auto px-6 py-4 flex justify-between items-center bg-gradient-to-r from-claude/20 to-orange-500/10 rounded-xl mt-4 backdrop-blur-sm border border-white/5">
             <div class="flex items-center space-x-4">
                 <span class="font-semibold text-lg">Mobile Dev MCP</span>
 
