@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 GGBoi360
+Copyright (c) 2026 GGBoi360 (Gilad Gabay)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -9,8 +9,17 @@ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+2. ATTRIBUTION REQUIREMENT: Any project, product, or service that uses or
+   incorporates this software must provide visible attribution to the original
+   author (GGBoi360/Gilad Gabay) in one of the following ways:
+   - In the project's README or documentation
+   - In an "About" or "Credits" section of the application
+   - In the source code comments where this software is used
+
+   Attribution should include: "Mobile Dev MCP by GGBoi360 (https://github.com/GGBoi360/mobile-dev-mcp)"
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -22,22 +31,13 @@ SOFTWARE.
 
 ---
 
-This MIT License applies to the following 17 Basic tier tools:
+This MIT License applies to the following 8 Free tier tools:
 
-- get_metro_logs
-- get_adb_logs
 - screenshot_emulator
 - list_devices
-- check_metro_status
-- get_app_info
-- clear_app_data
-- restart_adb
 - get_device_info
-- start_metro_logging
-- stop_metro_logging
-- list_ios_simulators
-- screenshot_ios_simulator
-- get_ios_simulator_logs
-- get_ios_simulator_info
+- get_app_info
+- get_adb_logs
+- get_metro_logs
+- check_metro_status
 - get_license_status
-- set_license_key
