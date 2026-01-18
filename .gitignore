@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code local settings
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# License cache (user-specific)
+.mobiledev-mcp/
+
+# Test coverage
+coverage/
+
+# Internal planning docs (not for public)
+ROADMAP.md
+CLAUDE.md
+docs/IMPROVEMENT_PLAN.md
+
+# Internal/private code
+src/orchestration.ts
+
+# npm pack output
+*.tgz
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Screenshot captures (testing)
+screenshots/
+
+# Debug output
+debug/

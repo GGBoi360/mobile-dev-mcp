@@ -1,0 +1,67 @@
+{
+  "name": "@ggboi360/mobile-dev-mcp",
+  "version": "0.3.0",
+  "description": "Read-only MCP server for mobile debugging with Claude - screenshots, logs, UI inspection for Android and iOS",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mobile-dev-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist/**/*",
+    "!dist/**/*.test.*",
+    "!dist/orchestration.*",
+    "LICENSE",
+    "LICENSE-MIT",
+    "LICENSE-ELASTIC",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GGBoi360/mobile-dev-mcp.git"
+  },
+  "homepage": "https://ggboi360.github.io/mobile-dev-mcp",
+  "bugs": {
+    "url": "https://github.com/GGBoi360/mobile-dev-mcp/issues"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "claude",
+    "mcp",
+    "mobile-dev",
+    "react-native",
+    "expo",
+    "android",
+    "ios",
+    "adb",
+    "metro",
+    "open-source",
+    "open-core",
+    "debugging",
+    "devtools",
+    "react-devtools"
+  ],
+  "author": "GGBoi360",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

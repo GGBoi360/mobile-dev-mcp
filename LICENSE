@@ -1,0 +1,49 @@
+# Mobile Dev MCP - Dual License
+
+This project uses a dual-license model ("Open Core"):
+
+## Free Tools (8 tools) - MIT License
+
+The **8 free tools** are licensed under the **MIT License**.
+See [LICENSE-MIT](LICENSE-MIT) for the full text.
+
+These tools are open source - free to use, modify, and distribute:
+
+**Android Debugging (7 tools):**
+- screenshot_emulator, list_devices, get_device_info, get_app_info
+- get_adb_logs, get_metro_logs, check_metro_status
+
+**License (1 tool):**
+- get_license_status
+
+Note: MIT license means the code is open source and free to use forever.
+
+## Advanced Tools (13 tools) - Elastic License 2.0
+
+The **13 advanced tools** are licensed under the **Elastic License 2.0**.
+See [LICENSE-ELASTIC](LICENSE-ELASTIC) for the full text.
+
+This means:
+- You CAN use them for personal or commercial projects
+- You CAN modify and create derivative works
+- You CANNOT offer this as a hosted/managed service
+- You CANNOT remove or circumvent the license key functionality
+
+Advanced tools include:
+- iOS Simulator support (screenshots, logs, device info)
+- UI tree inspection and element finding
+- Screen analysis and text extraction
+- Multi-device support
+
+## Why Dual License?
+
+We believe in open source while also needing to sustain development:
+
+- **MIT for Free**: Enables the community to freely use, learn from, and contribute to core Android debugging
+- **Elastic for Advanced**: Protects the commercial features that fund ongoing development
+
+## Questions?
+
+- GitHub: https://github.com/GGBoi360/mobile-dev-mcp
+- Twitter: @GiliboiGabay
+- Email: GiladGabay@proton.me

@@ -1,0 +1,46 @@
+# Source files (dist is published)
+src/
+
+# Test files (source and compiled)
+*.test.ts
+*.test.js
+*.test.d.ts
+*.test.d.ts.map
+*.test.js.map
+vitest.config.ts
+coverage/
+
+# Internal/private code
+dist/orchestration.*
+src/orchestration.ts
+
+# Development docs
+docs/
+ROADMAP.md
+CLAUDE.md
+CONTRIBUTING.md
+
+# Development config
+.github/
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.tgz
