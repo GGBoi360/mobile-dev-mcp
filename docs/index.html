@@ -148,6 +148,41 @@
         .deeper-bar .arrow {
             animation: float 2s ease-in-out infinite;
         }
+
+        /* Gradient text for hero */
+        .gradient-text {
+            background: linear-gradient(135deg, #D97757 0%, #f59e0b 50%, #D97757 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Blinking cursor */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #D97757;
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Copy button */
+        .copy-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .copy-wrapper:hover .copy-btn {
+            opacity: 1;
+        }
+        .copy-btn.copied {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-950 text-white">
@@ -163,13 +198,7 @@
     <div class="gradient-bg min-h-screen">
         <nav class="container mx-auto px-6 py-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <!-- Logo + Current Page -->
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-claude rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold">M</span>
-                    </div>
-                    <span class="font-semibold text-lg">Mobile Dev MCP</span>
-                </div>
+                <span class="font-semibold text-lg">Mobile Dev MCP</span>
 
                 <!-- Dropdown: MCP Tools by Gilad (click to toggle) -->
                 <div class="dropdown relative hidden md:block">
@@ -228,7 +257,7 @@
 
                 <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
                     Stop Copy-Pasting.<br>
-                    <span class="text-claude">Let Claude See Your App.</span>
+                    <span class="gradient-text">Let Claude See Your App.</span>
                 </h1>
 
                 <p class="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
@@ -448,7 +477,14 @@
                     </div>
                     <div class="p-6 mono text-sm">
                         <p class="text-gray-500 mb-2"># Install via npx (recommended)</p>
-                        <p class="text-green-400 mb-4">claude mcp add mobile-dev -- npx @ggboi360/mobile-dev-mcp</p>
+                        <div class="copy-wrapper flex items-center justify-between bg-gray-800/50 rounded px-3 py-2 mb-4">
+                            <code id="installCmd" class="text-green-400">claude mcp add mobile-dev -- npx @ggboi360/mobile-dev-mcp</code>
+                            <button id="copyBtn" class="copy-btn ml-3 text-gray-500 hover:text-white transition" title="Copy to clipboard">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        </div>
 
                         <p class="text-gray-500 mb-2"># Or add to Claude Code config</p>
                         <p class="text-green-400">{</p>
@@ -617,12 +653,7 @@
     <footer class="py-12 pb-24 bg-gray-950 border-t border-gray-800">
         <div class="container mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="flex items-center space-x-2 mb-4 md:mb-0">
-                    <div class="w-8 h-8 bg-claude rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold">M</span>
-                    </div>
-                    <span class="font-semibold">Mobile Dev MCP</span>
-                </div>
+                <span class="font-semibold mb-4 md:mb-0">Mobile Dev MCP</span>
 
                 <div class="flex items-center space-x-6 text-gray-400">
                     <a href="https://codecontrol.ai/mcp" class="hover:text-white transition">More Tools</a>
@@ -718,11 +749,15 @@
             heroDemo.innerHTML = '';
 
             // Animate lines
-            demoLines.forEach((line) => {
+            demoLines.forEach((line, index) => {
                 setTimeout(() => {
                     const p = document.createElement('p');
                     p.className = `${line.color || ''} demo-line`;
                     p.innerHTML = line.text || '&nbsp;';
+                    // Add blinking cursor to last line
+                    if (index === demoLines.length - 1) {
+                        p.innerHTML += '<span class="cursor"></span>';
+                    }
                     heroDemo.appendChild(p);
                 }, line.delay);
             });
@@ -741,6 +776,25 @@
         // Replay button
         if (heroReplayBtn) {
             heroReplayBtn.addEventListener('click', runHeroDemo);
+        }
+
+        // Copy button functionality
+        const copyBtn = document.getElementById('copyBtn');
+        const installCmd = document.getElementById('installCmd');
+        if (copyBtn && installCmd) {
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(installCmd.textContent);
+                    copyBtn.classList.add('copied');
+                    copyBtn.innerHTML = '<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    setTimeout(() => {
+                        copyBtn.classList.remove('copied');
+                        copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Copy failed:', err);
+                }
+            });
         }
     </script>
 </body>
