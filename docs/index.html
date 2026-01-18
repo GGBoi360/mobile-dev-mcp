@@ -245,26 +245,25 @@
                     </a>
                 </div>
 
-                <!-- Terminal Preview -->
-                <div class="terminal rounded-xl overflow-hidden text-left max-w-3xl mx-auto">
+                <!-- Quick Demo Teaser -->
+                <div class="terminal rounded-xl overflow-hidden text-left max-w-3xl mx-auto cursor-pointer hover:shadow-2xl transition-shadow" onclick="document.getElementById('demo-section').scrollIntoView({behavior: 'smooth'})">
                     <div class="flex items-center px-4 py-3 bg-gray-800/50 border-b border-gray-700">
                         <div class="flex space-x-2">
                             <div class="w-3 h-3 rounded-full bg-red-500"></div>
                             <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                             <div class="w-3 h-3 rounded-full bg-green-500"></div>
                         </div>
-                        <span class="ml-4 text-gray-400 text-sm mono">Claude Code</span>
+                        <span class="ml-4 text-gray-400 text-sm mono">Claude Code + Mobile Dev MCP</span>
                     </div>
                     <div class="p-6 mono text-sm">
-                        <p class="text-gray-500"># You</p>
-                        <p class="text-green-400 mb-4">> "My app crashed. What's in the logs?"</p>
-
-                        <p class="text-gray-500"># Claude (using get_adb_logs)</p>
-                        <p class="text-gray-300 mb-2">I found the error in your React Native logs:</p>
-                        <p class="text-red-400 mb-4">TypeError: Cannot read property 'user' of undefined<br>
-                        &nbsp;&nbsp;at HomeScreen.js:42</p>
-
-                        <p class="text-gray-300">The issue is on line 42. Let me fix that...</p>
+                        <p class="text-green-400 mb-2">> "My app crashed. What happened?"</p>
+                        <p class="text-gray-400 mb-2">Claude reads your logs, finds the error, fixes it...</p>
+                        <p class="text-claude flex items-center">
+                            <span>See the full demo below</span>
+                            <svg class="w-4 h-4 ml-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -397,7 +396,7 @@
     </section>
 
     <!-- See It In Action - Animated Demo -->
-    <section class="py-24 bg-gray-900">
+    <section id="demo-section" class="py-24 bg-gray-900">
         <div class="container mx-auto px-6">
             <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 fade-in">See It In Action</h2>
             <p class="text-gray-400 text-center mb-12 fade-in">Watch Claude debug a React Native crash in seconds</p>
